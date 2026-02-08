@@ -9,8 +9,12 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@graphql-tools/graphql-file-loader": "^8.1.9",
+    "@graphql-tools/load": "^8.1.8",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "graphql": "^16.12.0",
+    "graphql-yoga": "^5.18.0",
     "lucide-react": "^0.563.0",
     "next": "16.1.6",
     "radix-ui": "^1.4.3",
@@ -19,6 +23,9 @@
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
+    "@graphql-codegen/cli": "^6.1.1",
+    "@graphql-codegen/typescript": "^5.0.7",
+    "@graphql-codegen/typescript-resolvers": "^5.1.5",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

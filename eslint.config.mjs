@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Ignore generated GraphQL types
+    "lib/graphql/generated/**",
   ]),
 ]);
 
