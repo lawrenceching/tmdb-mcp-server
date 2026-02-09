@@ -20,146 +20,150 @@ function createMcpServer(): McpServer {
     }
   );
 
-  // Register TMDB search tool
-  server.registerTool(
-    'searchMovies',
-    {
-      description: 'Search for movies by title',
-      inputSchema: z.object({
-        query: z.string().description('Search query for movie titles'),
-        language: z.string().default('en-US').description('ISO 639-1 language code (e.g., en, zh-CN)'),
-      }),
-    },
-    async ({ query, language = 'en-US' }) => {
-      // In a real implementation, this would call the TMDB API
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `Searching for movies: "${query}" in ${language}\n\nThis would query the TMDB API for movie results.`,
-          },
-        ],
-      };
-    }
-  );
+  // const enableMcpTool = process.env.ENABLE_MCP_TOOL === 'true';
 
-  // Register TMDB movie details tool
-  server.registerTool(
-    'getMovieDetails',
-    {
-      description: 'Get detailed information about a specific movie',
-      inputSchema: z.object({
-        movieId: z.number().description('TMDB movie ID'),
-        language: z.string().default('en-US').description('ISO 639-1 language code (e.g., en, zh-CN)'),
-      }),
-    },
-    async ({ movieId, language = 'en-US' }) => {
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `Getting details for movie ID: ${movieId} in ${language}\n\nThis would fetch movie details from TMDB.`,
-          },
-        ],
-      };
-    }
-  );
+  // if (enableMcpTool) {
+  //   // Register TMDB search tool
+  //   server.registerTool(
+  //     'searchMovies',
+  //     {
+  //       description: 'Search for movies by title',
+  //       inputSchema: z.object({
+  //         query: z.string().description('Search query for movie titles'),
+  //         language: z.string().default('en-US').description('ISO 639-1 language code (e.g., en, zh-CN)'),
+  //       }),
+  //     },
+  //     async ({ query, language = 'en-US' }) => {
+  //       // In a real implementation, this would call the TMDB API
+  //       return {
+  //         content: [
+  //           {
+  //             type: 'text',
+  //             text: `Searching for movies: "${query}" in ${language}\n\nThis would query the TMDB API for movie results.`,
+  //           },
+  //         ],
+  //       };
+  //     }
+  //   );
 
-  // Register TMDB trending tool
-  server.registerTool(
-    'getTrending',
-    {
-      description: 'Get trending movies, TV shows, or people',
-      inputSchema: z.object({
-        mediaType: z.enum(['all', 'movie', 'tv', 'person']).default('all').description('Type of media to get trending for'),
-        timeWindow: z.enum(['day', 'week']).default('day').description('Time window for trending'),
-      }),
-    },
-    async ({ mediaType = 'all', timeWindow = 'day' }) => {
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `Getting trending ${mediaType} for ${timeWindow}\n\nThis would fetch trending content from TMDB.`,
-          },
-        ],
-      };
-    }
-  );
+  //   // Register TMDB movie details tool
+  //   server.registerTool(
+  //     'getMovieDetails',
+  //     {
+  //       description: 'Get detailed information about a specific movie',
+  //       inputSchema: z.object({
+  //         movieId: z.number().description('TMDB movie ID'),
+  //         language: z.string().default('en-US').description('ISO 639-1 language code (e.g., en, zh-CN)'),
+  //       }),
+  //     },
+  //     async ({ movieId, language = 'en-US' }) => {
+  //       return {
+  //         content: [
+  //           {
+  //             type: 'text',
+  //             text: `Getting details for movie ID: ${movieId} in ${language}\n\nThis would fetch movie details from TMDB.`,
+  //           },
+  //         ],
+  //       };
+  //     }
+  //   );
 
-  // Register TMDB discover tool
-  server.registerTool(
-    'discoverMovies',
-    {
-      description: 'Discover movies by various filters',
-      inputSchema: z.object({
-        genre: z.string().optional().description('Genre ID or name to filter by'),
-        year: z.number().optional().description('Year to filter by'),
-        language: z.string().default('en-US').description('ISO 639-1 language code (e.g., en, zh-CN)'),
-        sortBy: z.enum(['popularity.asc', 'popularity.desc', 'release_date.asc', 'release_date.desc', 'revenue.asc', 'revenue.desc', 'vote_average.asc', 'vote_average.desc']).default('popularity.desc').description('Sort order'),
-      }),
-    },
-    async ({ genre, year, language = 'en-US', sortBy = 'popularity.desc' }) => {
-      const filters = [];
-      if (genre) filters.push(`genre: ${genre}`);
-      if (year) filters.push(`year: ${year}`);
-      filters.push(`language: ${language}`);
-      filters.push(`sort by: ${sortBy}`);
+  //   // Register TMDB trending tool
+  //   server.registerTool(
+  //     'getTrending',
+  //     {
+  //       description: 'Get trending movies, TV shows, or people',
+  //       inputSchema: z.object({
+  //         mediaType: z.enum(['all', 'movie', 'tv', 'person']).default('all').description('Type of media to get trending for'),
+  //         timeWindow: z.enum(['day', 'week']).default('day').description('Time window for trending'),
+  //       }),
+  //     },
+  //     async ({ mediaType = 'all', timeWindow = 'day' }) => {
+  //       return {
+  //         content: [
+  //           {
+  //             type: 'text',
+  //             text: `Getting trending ${mediaType} for ${timeWindow}\n\nThis would fetch trending content from TMDB.`,
+  //           },
+  //         ],
+  //       };
+  //     }
+  //   );
 
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `Discovering movies with filters: ${filters.join(', ')}\n\nThis would query the TMDB discover endpoint.`,
-          },
-        ],
-      };
-    }
-  );
+  //   // Register TMDB discover tool
+  //   server.registerTool(
+  //     'discoverMovies',
+  //     {
+  //       description: 'Discover movies by various filters',
+  //       inputSchema: z.object({
+  //         genre: z.string().optional().description('Genre ID or name to filter by'),
+  //         year: z.number().optional().description('Year to filter by'),
+  //         language: z.string().default('en-US').description('ISO 639-1 language code (e.g., en, zh-CN)'),
+  //         sortBy: z.enum(['popularity.asc', 'popularity.desc', 'release_date.asc', 'release_date.desc', 'revenue.asc', 'revenue.desc', 'vote_average.asc', 'vote_average.desc']).default('popularity.desc').description('Sort order'),
+  //       }),
+  //     },
+  //     async ({ genre, year, language = 'en-US', sortBy = 'popularity.desc' }) => {
+  //       const filters = [];
+  //       if (genre) filters.push(`genre: ${genre}`);
+  //       if (year) filters.push(`year: ${year}`);
+  //       filters.push(`language: ${language}`);
+  //       filters.push(`sort by: ${sortBy}`);
 
-  // Register TMDB TV show search tool
-  server.registerTool(
-    'searchTVShows',
-    {
-      description: 'Search for TV shows by title',
-      inputSchema: z.object({
-        query: z.string().description('Search query for TV show titles'),
-        language: z.string().default('en-US').description('ISO 639-1 language code (e.g., en, zh-CN)'),
-      }),
-    },
-    async ({ query, language = 'en-US' }) => {
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `Searching for TV shows: "${query}" in ${language}\n\nThis would query the TMDB API for TV show results.`,
-          },
-        ],
-      };
-    }
-  );
+  //       return {
+  //         content: [
+  //           {
+  //             type: 'text',
+  //             text: `Discovering movies with filters: ${filters.join(', ')}\n\nThis would query the TMDB discover endpoint.`,
+  //           },
+  //         ],
+  //       };
+  //     }
+  //   );
 
-  // Register TMDB TV show details tool
-  server.registerTool(
-    'getTVShowDetails',
-    {
-      description: 'Get detailed information about a specific TV show',
-      inputSchema: z.object({
-        seriesId: z.number().description('TMDB TV series ID'),
-        language: z.string().default('en-US').description('ISO 639-1 language code (e.g., en, zh-CN)'),
-      }),
-    },
-    async ({ seriesId, language = 'en-US' }) => {
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `Getting details for TV series ID: ${seriesId} in ${language}\n\nThis would fetch TV show details from TMDB.`,
-          },
-        ],
-      };
-    }
-  );
+  //   // Register TMDB TV show search tool
+  //   server.registerTool(
+  //     'searchTVShows',
+  //     {
+  //       description: 'Search for TV shows by title',
+  //       inputSchema: z.object({
+  //         query: z.string().description('Search query for TV show titles'),
+  //         language: z.string().default('en-US').description('ISO 639-1 language code (e.g., en, zh-CN)'),
+  //       }),
+  //     },
+  //     async ({ query, language = 'en-US' }) => {
+  //       return {
+  //         content: [
+  //           {
+  //             type: 'text',
+  //             text: `Searching for TV shows: "${query}" in ${language}\n\nThis would query the TMDB API for TV show results.`,
+  //           },
+  //         ],
+  //       };
+  //     }
+  //   );
+
+  //   // Register TMDB TV show details tool
+  //   server.registerTool(
+  //     'getTVShowDetails',
+  //     {
+  //       description: 'Get detailed information about a specific TV show',
+  //       inputSchema: z.object({
+  //         seriesId: z.number().description('TMDB TV series ID'),
+  //         language: z.string().default('en-US').description('ISO 639-1 language code (e.g., en, zh-CN)'),
+  //       }),
+  //     },
+  //     async ({ seriesId, language = 'en-US' }) => {
+  //       return {
+  //         content: [
+  //           {
+  //             type: 'text',
+  //             text: `Getting details for TV series ID: ${seriesId} in ${language}\n\nThis would fetch TV show details from TMDB.`,
+  //           },
+  //         ],
+  //       };
+  //     }
+  //   );
+  // }
 
   return server;
 }
