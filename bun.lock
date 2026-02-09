@@ -7,6 +7,7 @@
       "dependencies": {
         "@graphql-tools/graphql-file-loader": "^8.1.9",
         "@graphql-tools/load": "^8.1.8",
+        "@modelcontextprotocol/sdk": "^1.26.0",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "graphql": "^16.12.0",
