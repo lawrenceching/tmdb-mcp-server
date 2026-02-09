@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { NextRequest } from 'next/server';
+import { z } from 'zod';
 
 /**
  * Create and configure the MCP server instance with TMDB tools
@@ -24,21 +25,10 @@ function createMcpServer(): McpServer {
     'searchMovies',
     {
       description: 'Search for movies by title',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          query: {
-            type: 'string',
-            description: 'Search query for movie titles',
-          },
-          language: {
-            type: 'string',
-            description: 'ISO 639-1 language code (e.g., en, zh-CN)',
-            default: 'en-US',
-          },
-        },
-        required: ['query'],
-      },
+      inputSchema: z.object({
+        query: z.string().description('Search query for movie titles'),
+        language: z.string().default('en-US').description('ISO 639-1 language code (e.g., en, zh-CN)'),
+      }),
     },
     async ({ query, language = 'en-US' }) => {
       // In a real implementation, this would call the TMDB API
@@ -58,21 +48,10 @@ function createMcpServer(): McpServer {
     'getMovieDetails',
     {
       description: 'Get detailed information about a specific movie',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          movieId: {
-            type: 'number',
-            description: 'TMDB movie ID',
-          },
-          language: {
-            type: 'string',
-            description: 'ISO 639-1 language code (e.g., en, zh-CN)',
-            default: 'en-US',
-          },
-        },
-        required: ['movieId'],
-      },
+      inputSchema: z.object({
+        movieId: z.number().description('TMDB movie ID'),
+        language: z.string().default('en-US').description('ISO 639-1 language code (e.g., en, zh-CN)'),
+      }),
     },
     async ({ movieId, language = 'en-US' }) => {
       return {
@@ -91,23 +70,10 @@ function createMcpServer(): McpServer {
     'getTrending',
     {
       description: 'Get trending movies, TV shows, or people',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          mediaType: {
-            type: 'string',
-            enum: ['all', 'movie', 'tv', 'person'],
-            description: 'Type of media to get trending for',
-            default: 'all',
-          },
-          timeWindow: {
-            type: 'string',
-            enum: ['day', 'week'],
-            description: 'Time window for trending',
-            default: 'day',
-          },
-        },
-      },
+      inputSchema: z.object({
+        mediaType: z.enum(['all', 'movie', 'tv', 'person']).default('all').description('Type of media to get trending for'),
+        timeWindow: z.enum(['day', 'week']).default('day').description('Time window for trending'),
+      }),
     },
     async ({ mediaType = 'all', timeWindow = 'day' }) => {
       return {
@@ -126,30 +92,12 @@ function createMcpServer(): McpServer {
     'discoverMovies',
     {
       description: 'Discover movies by various filters',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          genre: {
-            type: 'string',
-            description: 'Genre ID or name to filter by',
-          },
-          year: {
-            type: 'number',
-            description: 'Year to filter by',
-          },
-          language: {
-            type: 'string',
-            description: 'ISO 639-1 language code (e.g., en, zh-CN)',
-            default: 'en-US',
-          },
-          sortBy: {
-            type: 'string',
-            enum: ['popularity.asc', 'popularity.desc', 'release_date.asc', 'release_date.desc', 'revenue.asc', 'revenue.desc', 'vote_average.asc', 'vote_average.desc'],
-            description: 'Sort order',
-            default: 'popularity.desc',
-          },
-        },
-      },
+      inputSchema: z.object({
+        genre: z.string().optional().description('Genre ID or name to filter by'),
+        year: z.number().optional().description('Year to filter by'),
+        language: z.string().default('en-US').description('ISO 639-1 language code (e.g., en, zh-CN)'),
+        sortBy: z.enum(['popularity.asc', 'popularity.desc', 'release_date.asc', 'release_date.desc', 'revenue.asc', 'revenue.desc', 'vote_average.asc', 'vote_average.desc']).default('popularity.desc').description('Sort order'),
+      }),
     },
     async ({ genre, year, language = 'en-US', sortBy = 'popularity.desc' }) => {
       const filters = [];
@@ -174,21 +122,10 @@ function createMcpServer(): McpServer {
     'searchTVShows',
     {
       description: 'Search for TV shows by title',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          query: {
-            type: 'string',
-            description: 'Search query for TV show titles',
-          },
-          language: {
-            type: 'string',
-            description: 'ISO 639-1 language code (e.g., en, zh-CN)',
-            default: 'en-US',
-          },
-        },
-        required: ['query'],
-      },
+      inputSchema: z.object({
+        query: z.string().description('Search query for TV show titles'),
+        language: z.string().default('en-US').description('ISO 639-1 language code (e.g., en, zh-CN)'),
+      }),
     },
     async ({ query, language = 'en-US' }) => {
       return {
@@ -207,21 +144,10 @@ function createMcpServer(): McpServer {
     'getTVShowDetails',
     {
       description: 'Get detailed information about a specific TV show',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          seriesId: {
-            type: 'number',
-            description: 'TMDB TV series ID',
-          },
-          language: {
-            type: 'string',
-            description: 'ISO 639-1 language code (e.g., en, zh-CN)',
-            default: 'en-US',
-          },
-        },
-        required: ['seriesId'],
-      },
+      inputSchema: z.object({
+        seriesId: z.number().description('TMDB TV series ID'),
+        language: z.string().default('en-US').description('ISO 639-1 language code (e.g., en, zh-CN)'),
+      }),
     },
     async ({ seriesId, language = 'en-US' }) => {
       return {
