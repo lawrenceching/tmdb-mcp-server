@@ -99,12 +99,21 @@ function createMcpServer(): McpServer {
           ],
         };
       } catch (error) {
-        logger.error({ error, query }, 'Error searching movies');
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorStack = error instanceof Error ? error.stack : undefined;
+        logger.error({ 
+          error: { 
+            message: errorMessage, 
+            stack: errorStack,
+            name: error instanceof Error ? error.name : 'Unknown'
+          }, 
+          query 
+        }, 'Error searching movies');
         return {
           content: [
             {
               type: 'text',
-              text: `Error searching movies: ${error instanceof Error ? error.message : 'Unknown error'}`,
+              text: `Error searching movies: ${errorMessage}`,
             },
           ],
           isError: true,
@@ -140,12 +149,21 @@ function createMcpServer(): McpServer {
           ],
         };
       } catch (error) {
-        logger.error({ error, query }, 'Error searching TV shows');
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorStack = error instanceof Error ? error.stack : undefined;
+        logger.error({ 
+          error: { 
+            message: errorMessage, 
+            stack: errorStack,
+            name: error instanceof Error ? error.name : 'Unknown'
+          }, 
+          query 
+        }, 'Error searching TV shows');
         return {
           content: [
             {
               type: 'text',
-              text: `Error searching TV shows: ${error instanceof Error ? error.message : 'Unknown error'}`,
+              text: `Error searching TV shows: ${errorMessage}`,
             },
           ],
           isError: true,
@@ -186,15 +204,23 @@ export async function POST(request: NextRequest) {
     // Return the response
     return response;
   } catch (error) {
-    logger.error({ error }, 'MCP Error');
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    logger.error({ 
+      error: { 
+        message: errorMessage, 
+        stack: errorStack,
+        name: error instanceof Error ? error.name : 'Unknown'
+      } 
+    }, 'MCP Error');
 
     return new Response(
       JSON.stringify({
         jsonrpc: '2.0',
         error: {
           code: -32603,
-          message: error instanceof Error ? error.message : 'Internal server error',
-          data: error instanceof Error ? error.stack : undefined,
+          message: errorMessage,
+          data: errorStack,
         },
         id: null,
       }),
