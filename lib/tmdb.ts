@@ -40,3 +40,28 @@ export async function fetchFromTMDB(
     throw error;
   }
 }
+
+export interface SearchMoviesParams {
+  query: string;
+  language?: string;
+  page?: number;
+  include_adult?: boolean;
+}
+
+export async function searchMovies(params: SearchMoviesParams): Promise<any> {
+  const queryParams = new URLSearchParams({
+    query: params.query,
+    language: params.language || 'en-US',
+    page: String(params.page || 1),
+    include_adult: String(params.include_adult || false),
+  });
+
+  const response = await fetchFromTMDB(`/search/movie?${queryParams.toString()}`);
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`TMDB API error: ${response.status} ${response.statusText} - ${errorText}`);
+  }
+
+  return response.json();
+}

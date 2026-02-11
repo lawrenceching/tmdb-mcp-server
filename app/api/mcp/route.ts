@@ -2,10 +2,61 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
+import { GraphQLClient } from 'graphql-request';
 
-/**
- * Create and configure the MCP server instance with TMDB tools
- */
+// GraphQL Client
+const graphqlClient = new GraphQLClient(
+  process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:3000/api/graphql'
+);
+
+// GraphQL Queries
+const SEARCH_MOVIE_QUERY = `
+  query SearchMovie($query: String!, $page: Int) {
+    searchMovie(query: $query, page: $page) {
+      page
+      total_pages
+      total_results
+      results {
+        id
+        title
+        original_title
+        overview
+        poster_path
+        backdrop_path
+        release_date
+        vote_average
+        vote_count
+        popularity
+        adult
+        genre_ids
+      }
+    }
+  }
+` as const;
+
+const SEARCH_TV_QUERY = `
+  query SearchTV($query: String!, $page: Int) {
+    searchTV(query: $query, page: $page) {
+      page
+      total_pages
+      total_results
+      results {
+        id
+        name
+        original_name
+        overview
+        poster_path
+        backdrop_path
+        first_air_date
+        vote_average
+        vote_count
+        popularity
+        genre_ids
+      }
+    }
+  }
+` as const;
+
 function createMcpServer(): McpServer {
   const server = new McpServer(
     {
@@ -20,150 +71,83 @@ function createMcpServer(): McpServer {
     }
   );
 
-  // const enableMcpTool = process.env.ENABLE_MCP_TOOL === 'true';
+  // Search Movies Tool
+  server.registerTool(
+    'searchMovies',
+    {
+      description: 'Search for movies by title using GraphQL',
+      inputSchema: {
+        query: z.string(),
+        page: z.number().optional(),
+      },
+    },
+    async ({ query, page }) => {
+      try {
+        const data = await graphqlClient.request(SEARCH_MOVIE_QUERY, {
+          query,
+          page: page ?? 1,
+        });
 
-  // if (enableMcpTool) {
-  //   // Register TMDB search tool
-  //   server.registerTool(
-  //     'searchMovies',
-  //     {
-  //       description: 'Search for movies by title',
-  //       inputSchema: z.object({
-  //         query: z.string().description('Search query for movie titles'),
-  //         language: z.string().default('en-US').description('ISO 639-1 language code (e.g., en, zh-CN)'),
-  //       }),
-  //     },
-  //     async ({ query, language = 'en-US' }) => {
-  //       // In a real implementation, this would call the TMDB API
-  //       return {
-  //         content: [
-  //           {
-  //             type: 'text',
-  //             text: `Searching for movies: "${query}" in ${language}\n\nThis would query the TMDB API for movie results.`,
-  //           },
-  //         ],
-  //       };
-  //     }
-  //   );
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(data.searchMovie, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Error searching movies: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+  );
 
-  //   // Register TMDB movie details tool
-  //   server.registerTool(
-  //     'getMovieDetails',
-  //     {
-  //       description: 'Get detailed information about a specific movie',
-  //       inputSchema: z.object({
-  //         movieId: z.number().description('TMDB movie ID'),
-  //         language: z.string().default('en-US').description('ISO 639-1 language code (e.g., en, zh-CN)'),
-  //       }),
-  //     },
-  //     async ({ movieId, language = 'en-US' }) => {
-  //       return {
-  //         content: [
-  //           {
-  //             type: 'text',
-  //             text: `Getting details for movie ID: ${movieId} in ${language}\n\nThis would fetch movie details from TMDB.`,
-  //           },
-  //         ],
-  //       };
-  //     }
-  //   );
+  // Search TV Shows Tool
+  server.registerTool(
+    'searchTV',
+    {
+      description: 'Search for TV shows by title using GraphQL',
+      inputSchema: {
+        query: z.string(),
+        page: z.number().optional(),
+      },
+    },
+    async ({ query, page }) => {
+      try {
+        const data = await graphqlClient.request(SEARCH_TV_QUERY, {
+          query,
+          page: page ?? 1,
+        });
 
-  //   // Register TMDB trending tool
-  //   server.registerTool(
-  //     'getTrending',
-  //     {
-  //       description: 'Get trending movies, TV shows, or people',
-  //       inputSchema: z.object({
-  //         mediaType: z.enum(['all', 'movie', 'tv', 'person']).default('all').description('Type of media to get trending for'),
-  //         timeWindow: z.enum(['day', 'week']).default('day').description('Time window for trending'),
-  //       }),
-  //     },
-  //     async ({ mediaType = 'all', timeWindow = 'day' }) => {
-  //       return {
-  //         content: [
-  //           {
-  //             type: 'text',
-  //             text: `Getting trending ${mediaType} for ${timeWindow}\n\nThis would fetch trending content from TMDB.`,
-  //           },
-  //         ],
-  //       };
-  //     }
-  //   );
-
-  //   // Register TMDB discover tool
-  //   server.registerTool(
-  //     'discoverMovies',
-  //     {
-  //       description: 'Discover movies by various filters',
-  //       inputSchema: z.object({
-  //         genre: z.string().optional().description('Genre ID or name to filter by'),
-  //         year: z.number().optional().description('Year to filter by'),
-  //         language: z.string().default('en-US').description('ISO 639-1 language code (e.g., en, zh-CN)'),
-  //         sortBy: z.enum(['popularity.asc', 'popularity.desc', 'release_date.asc', 'release_date.desc', 'revenue.asc', 'revenue.desc', 'vote_average.asc', 'vote_average.desc']).default('popularity.desc').description('Sort order'),
-  //       }),
-  //     },
-  //     async ({ genre, year, language = 'en-US', sortBy = 'popularity.desc' }) => {
-  //       const filters = [];
-  //       if (genre) filters.push(`genre: ${genre}`);
-  //       if (year) filters.push(`year: ${year}`);
-  //       filters.push(`language: ${language}`);
-  //       filters.push(`sort by: ${sortBy}`);
-
-  //       return {
-  //         content: [
-  //           {
-  //             type: 'text',
-  //             text: `Discovering movies with filters: ${filters.join(', ')}\n\nThis would query the TMDB discover endpoint.`,
-  //           },
-  //         ],
-  //       };
-  //     }
-  //   );
-
-  //   // Register TMDB TV show search tool
-  //   server.registerTool(
-  //     'searchTVShows',
-  //     {
-  //       description: 'Search for TV shows by title',
-  //       inputSchema: z.object({
-  //         query: z.string().description('Search query for TV show titles'),
-  //         language: z.string().default('en-US').description('ISO 639-1 language code (e.g., en, zh-CN)'),
-  //       }),
-  //     },
-  //     async ({ query, language = 'en-US' }) => {
-  //       return {
-  //         content: [
-  //           {
-  //             type: 'text',
-  //             text: `Searching for TV shows: "${query}" in ${language}\n\nThis would query the TMDB API for TV show results.`,
-  //           },
-  //         ],
-  //       };
-  //     }
-  //   );
-
-  //   // Register TMDB TV show details tool
-  //   server.registerTool(
-  //     'getTVShowDetails',
-  //     {
-  //       description: 'Get detailed information about a specific TV show',
-  //       inputSchema: z.object({
-  //         seriesId: z.number().description('TMDB TV series ID'),
-  //         language: z.string().default('en-US').description('ISO 639-1 language code (e.g., en, zh-CN)'),
-  //       }),
-  //     },
-  //     async ({ seriesId, language = 'en-US' }) => {
-  //       return {
-  //         content: [
-  //           {
-  //             type: 'text',
-  //             text: `Getting details for TV series ID: ${seriesId} in ${language}\n\nThis would fetch TV show details from TMDB.`,
-  //           },
-  //         ],
-  //       };
-  //     }
-  //   );
-  // }
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(data.searchTV, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Error searching TV shows: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+  );
 
   return server;
 }
