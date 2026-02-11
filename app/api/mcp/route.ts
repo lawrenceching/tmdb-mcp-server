@@ -3,6 +3,7 @@ import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { GraphQLClient } from 'graphql-request';
+import logger from '@/lib/logger';
 
 // GraphQL Client
 const graphqlClient = new GraphQLClient(
@@ -83,6 +84,7 @@ function createMcpServer(): McpServer {
     },
     async ({ query, page }) => {
       try {
+        logger.info({ query, page }, 'Searching movies');
         const data = await graphqlClient.request(SEARCH_MOVIE_QUERY, {
           query,
           page: page ?? 1,
@@ -97,6 +99,7 @@ function createMcpServer(): McpServer {
           ],
         };
       } catch (error) {
+        logger.error({ error, query }, 'Error searching movies');
         return {
           content: [
             {
@@ -122,6 +125,7 @@ function createMcpServer(): McpServer {
     },
     async ({ query, page }) => {
       try {
+        logger.info({ query, page }, 'Searching TV shows');
         const data = await graphqlClient.request(SEARCH_TV_QUERY, {
           query,
           page: page ?? 1,
@@ -136,6 +140,7 @@ function createMcpServer(): McpServer {
           ],
         };
       } catch (error) {
+        logger.error({ error, query }, 'Error searching TV shows');
         return {
           content: [
             {
@@ -157,7 +162,7 @@ function createMcpServer(): McpServer {
  */
 export async function POST(request: NextRequest) {
   try {
-    console.log('MCP Request received');
+    logger.info('MCP Request received');
 
     // Create a new server instance for each request (stateless)
     const server = createMcpServer();
@@ -181,7 +186,7 @@ export async function POST(request: NextRequest) {
     // Return the response
     return response;
   } catch (error) {
-    console.error('MCP Error:', error);
+    logger.error('MCP Error:', error);
 
     return new Response(
       JSON.stringify({
