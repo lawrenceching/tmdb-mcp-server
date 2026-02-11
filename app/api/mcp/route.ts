@@ -186,7 +186,7 @@ export async function POST(request: NextRequest) {
     // Return the response
     return response;
   } catch (error) {
-    logger.error('MCP Error:', error);
+    logger.error({ error }, 'MCP Error');
 
     return new Response(
       JSON.stringify({
