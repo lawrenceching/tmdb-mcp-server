@@ -24,6 +24,7 @@ export default function Home() {
           {/* Quick Nav Links */}
           <nav className="mb-12 flex flex-wrap items-center justify-center gap-3">
             {[
+              { id: "claude-code", label: "Claude Code", color: "from-red-500 to-red-600" },
               { id: "claude-desktop", label: "Claude Desktop", color: "from-orange-500 to-orange-600" },
               { id: "cursor", label: "Cursor", color: "from-purple-500 to-purple-600" },
               { id: "windsurf", label: "Windsurf", color: "from-cyan-500 to-cyan-600" },
@@ -41,6 +42,44 @@ export default function Home() {
               </a>
             ))}
           </nav>
+
+          {/* Claude Code */}
+          <div id="claude-code" className="mb-10 scroll-mt-8 rounded-xl border border-border bg-card p-6 shadow-sm">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-red-500 to-red-600 text-white font-bold">
+                CC
+              </div>
+              <div>
+                <h4 className="text-lg font-semibold">Claude Code</h4>
+                <p className="text-sm text-muted-foreground">AI coding agent in the browser</p>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="rounded-lg bg-blue-500/10 border border-blue-500/20 p-4">
+                <p className="text-sm text-blue-600 dark:text-blue-400">
+                  <strong>Recommended:</strong> Use project scope to share MCP server configuration with your team.
+                  See <a href="https://code.claude.com/docs/en/mcp#project-scope" target="_blank" rel="noopener noreferrer" className="font-semibold hover:underline">Claude Code MCP documentation</a> for more details.
+                </p>
+              </div>
+              <div className="rounded-lg bg-muted/50 border border-border p-4">
+                <p className="text-sm text-muted-foreground">
+                  Learn more about MCP in Claude Code at the <a href="https://code.claude.com/docs/en/mcp" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">official documentation</a>.
+                </p>
+              </div>
+              <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+                <li>Run the following command in your terminal:</li>
+              </ol>
+              <div className="mt-4 rounded-lg bg-muted p-4">
+                <pre className="overflow-x-auto text-xs">
+                  <code>claude mcp add tmdb --transport http --scope project https://tmdb-mcp-server.imlc.me/api/mcp</code>
+                </pre>
+              </div>
+              <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground" start={2}>
+                <li>This creates a <span className="font-mono rounded bg-muted px-1.5 py-0.5">.mcp.json</span> file in your project root</li>
+                <li>The configuration can be checked into version control for team collaboration</li>
+              </ol>
+            </div>
+          </div>
 
           {/* Claude Desktop */}
           <div id="claude-desktop" className="mb-10 scroll-mt-8 rounded-xl border border-border bg-card p-6 shadow-sm">
