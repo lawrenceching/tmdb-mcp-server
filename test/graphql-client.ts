@@ -292,8 +292,8 @@ const TV_BASIC_QUERY = gql`
 `;
 
 const SEARCH_MOVIE_QUERY = gql`
-  query SearchMovie($query: String!, $page: Int = 1) {
-    searchMovie(query: $query, page: $page) {
+  query SearchMovie($query: String!, $page: Int = 1, $language: String) {
+    searchMovie(query: $query, page: $page, language: $language) {
       page
       total_results
       total_pages
@@ -317,8 +317,8 @@ const SEARCH_MOVIE_QUERY = gql`
 `;
 
 const SEARCH_TV_QUERY = gql`
-  query SearchTV($query: String!, $page: Int = 1) {
-    searchTV(query: $query, page: $page) {
+  query SearchTV($query: String!, $page: Int = 1, $language: String) {
+    searchTV(query: $query, page: $page, language: $language) {
       page
       total_results
       total_pages
@@ -388,12 +388,14 @@ interface TvBasicArgs {
 interface SearchMovieArgs {
   query: string;
   page?: number;
+  language?: string;
   fields?: string[];
 }
 
 interface SearchTVArgs {
   query: string;
   page?: number;
+  language?: string;
   fields?: string[];
 }
 
@@ -460,6 +462,7 @@ export class TMDBGraphQLClient {
   async searchMovies(
     query: string,
     page: number = 1,
+    language?: string,
     fields?: string[]
   ): Promise<SearchResult> {
     // Build dynamic query with specified fields
@@ -467,8 +470,8 @@ export class TMDBGraphQLClient {
     const fieldStrings = validFields.map((f) => `        ${f}`).join('\n');
 
     const dynamicQuery = `
-      query SearchMovie($query: String!, $page: Int = 1) {
-        searchMovie(query: $query, page: $page) {
+      query SearchMovie($query: String!, $page: Int = 1, $language: String) {
+        searchMovie(query: $query, page: $page, language: $language) {
           page
           total_results
           total_pages
@@ -482,6 +485,7 @@ ${fieldStrings}
     const data = await this.request<{ searchMovie: SearchResult }>(dynamicQuery, {
       query,
       page,
+      language: language ?? null,
     });
     return data.searchMovie;
   }
@@ -500,6 +504,7 @@ ${fieldStrings}
   async searchTVShowsWithFields(
     query: string,
     page: number = 1,
+    language?: string,
     fields?: string[]
   ): Promise<SearchResult> {
     // Build dynamic query with specified fields
@@ -507,8 +512,8 @@ ${fieldStrings}
     const fieldStrings = validFields.map((f) => `        ${f}`).join('\n');
 
     const dynamicQuery = `
-      query SearchTV($query: String!, $page: Int = 1) {
-        searchTV(query: $query, page: $page) {
+      query SearchTV($query: String!, $page: Int = 1, $language: String) {
+        searchTV(query: $query, page: $page, language: $language) {
           page
           total_results
           total_pages
@@ -522,6 +527,7 @@ ${fieldStrings}
     const data = await this.request<{ searchTV: SearchResult }>(dynamicQuery, {
       query,
       page,
+      language: language ?? null,
     });
     return data.searchTV;
   }
@@ -632,7 +638,7 @@ async function main() {
 
     // Test 3b: Search for movies with custom fields
     console.log('Test 3b: Searching for "Batman" with custom fields (id, title, release_date, vote_average)...');
-    const batmanResults = await client.searchMovies('Batman', 1, [
+    const batmanResults = await client.searchMovies('Batman', 1, undefined, [
       'id',
       'title',
       'release_date',
@@ -646,7 +652,7 @@ async function main() {
 
     // Test 3c: Search for TV shows with custom fields
     console.log('Test 3c: Searching for "Game of Thrones" with custom fields (id, name, first_air_date)...');
-    const gotResults = await client.searchTVShowsWithFields('Game of Thrones', 1, [
+    const gotResults = await client.searchTVShowsWithFields('Game of Thrones', 1, undefined, [
       'id',
       'name',
       'first_air_date',
@@ -654,6 +660,60 @@ async function main() {
     ]);
     console.log(`Found ${gotResults.total_results} results:`);
     gotResults.results.slice(0, 3).forEach((result, index) => {
+      console.log(`  ${index + 1}. ${result.name} (${result.first_air_date?.split('-')[0] || 'N/A'}) - Rating: ${result.vote_average}`);
+    });
+    console.log('');
+
+    // Test 3d: Search for movies with language (English)
+    console.log('Test 3d: Searching for "Batman" with language "en-US"...');
+    const batmanEnResults = await client.searchMovies('Batman', 1, 'en-US');
+    console.log(`Found ${batmanEnResults.total_results} results (showing first 3):`);
+    batmanEnResults.results.slice(0, 3).forEach((result, index) => {
+      console.log(`  ${index + 1}. ${result.title} (${result.release_date?.split('-')[0] || 'N/A'}) - Rating: ${result.vote_average}`);
+    });
+    console.log('');
+
+    // Test 3e: Search for movies with language (Chinese Simplified)
+    console.log('Test 3e: Searching for "Batman" with language "zh-CN"...');
+    const batmanZhResults = await client.searchMovies('Batman', 1, 'zh-CN');
+    console.log(`Found ${batmanZhResults.total_results} results (showing first 3):`);
+    batmanZhResults.results.slice(0, 3).forEach((result, index) => {
+      console.log(`  ${index + 1}. ${result.title} (${result.release_date?.split('-')[0] || 'N/A'}) - Rating: ${result.vote_average}`);
+    });
+    console.log('');
+
+    // Test 3f: Search for movies with language (Japanese)
+    console.log('Test 3f: Searching for "Batman" with language "ja-JP"...');
+    const batmanJaResults = await client.searchMovies('Batman', 1, 'ja-JP');
+    console.log(`Found ${batmanJaResults.total_results} results (showing first 3):`);
+    batmanJaResults.results.slice(0, 3).forEach((result, index) => {
+      console.log(`  ${index + 1}. ${result.title} (${result.release_date?.split('-')[0] || 'N/A'}) - Rating: ${result.vote_average}`);
+    });
+    console.log('');
+
+    // Test 3g: Search for TV shows with language (English)
+    console.log('Test 3g: Searching for "Breaking Bad" with language "en-US"...');
+    const tvEnResults = await client.searchTVShowsWithFields('Breaking Bad', 1, 'en-US');
+    console.log(`Found ${tvEnResults.total_results} results:`);
+    tvEnResults.results.slice(0, 3).forEach((result, index) => {
+      console.log(`  ${index + 1}. ${result.name} (${result.first_air_date?.split('-')[0] || 'N/A'}) - Rating: ${result.vote_average}`);
+    });
+    console.log('');
+
+    // Test 3h: Search for TV shows with language (Chinese Simplified)
+    console.log('Test 3h: Searching for "Breaking Bad" with language "zh-CN"...');
+    const tvZhResults = await client.searchTVShowsWithFields('Breaking Bad', 1, 'zh-CN');
+    console.log(`Found ${tvZhResults.total_results} results:`);
+    tvZhResults.results.slice(0, 3).forEach((result, index) => {
+      console.log(`  ${index + 1}. ${result.name} (${result.first_air_date?.split('-')[0] || 'N/A'}) - Rating: ${result.vote_average}`);
+    });
+    console.log('');
+
+    // Test 3i: Search for TV shows with language (Japanese)
+    console.log('Test 3i: Searching for "Breaking Bad" with language "ja-JP"...');
+    const tvJaResults = await client.searchTVShowsWithFields('Breaking Bad', 1, 'ja-JP');
+    console.log(`Found ${tvJaResults.total_results} results:`);
+    tvJaResults.results.slice(0, 3).forEach((result, index) => {
       console.log(`  ${index + 1}. ${result.name} (${result.first_air_date?.split('-')[0] || 'N/A'}) - Rating: ${result.vote_average}`);
     });
     console.log('');

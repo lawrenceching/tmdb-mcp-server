@@ -16,8 +16,8 @@ const typeDefs = `
     tvBasic(id: ID!): TVShowBasic
     
     # Search queries
-    searchMovie(query: String!, page: Int = 1): SearchResult!
-    searchTV(query: String!, page: Int = 1): SearchResult!
+    searchMovie(query: String!, page: Int = 1, language: String): SearchResult!
+    searchTV(query: String!, page: Int = 1, language: String): SearchResult!
     searchMulti(query: String!, page: Int = 1): [MediaResult!]!
   }
 
