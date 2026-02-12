@@ -11,5 +11,31 @@ const typeDefs = loadSchemaSync('./lib/graphql/schema/schema.graphql', {
 
 export const schema = createSchema({
   typeDefs,
-  resolvers: [movieResolvers, tvResolvers, searchResolvers],
+  resolvers: [
+    movieResolvers, 
+    tvResolvers, 
+    searchResolvers,
+    {
+      // Union type resolver for MediaResult
+      MediaResult: {
+        __resolveType(obj: Record<string, unknown>): string | null {
+          // TMDB returns media_type field that indicates the type
+          if (obj.media_type === 'movie' || obj.title) {
+            return 'Movie';
+          }
+          if (obj.media_type === 'tv' || obj.name) {
+            return 'TVShow';
+          }
+          // Fallback based on field presence
+          if ('title' in obj) {
+            return 'Movie';
+          }
+          if ('name' in obj) {
+            return 'TVShow';
+          }
+          return null;
+        },
+      },
+    },
+  ],
 });

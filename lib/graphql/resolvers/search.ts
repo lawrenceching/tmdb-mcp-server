@@ -38,7 +38,8 @@ export const searchResolvers = {
       if (!response.ok) {
         throw new Error(`Multi-search failed: ${response.status}`);
       }
-      return response.json();
+      const data = await response.json();
+      return data.results;
     },
   },
 };
