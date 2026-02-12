@@ -388,11 +388,13 @@ interface TvBasicArgs {
 interface SearchMovieArgs {
   query: string;
   page?: number;
+  fields?: string[];
 }
 
 interface SearchTVArgs {
   query: string;
   page?: number;
+  fields?: string[];
 }
 
 interface SearchMultiArgs {
@@ -453,10 +455,34 @@ export class TMDBGraphQLClient {
   }
 
   /**
-   * Search for movies
+   * Search for movies with custom fields
    */
-  async searchMovies(query: string, page: number = 1): Promise<SearchResult> {
-    const data = await this.request<{ searchMovie: SearchResult }>(SEARCH_MOVIE_QUERY, { query, page });
+  async searchMovies(
+    query: string,
+    page: number = 1,
+    fields?: string[]
+  ): Promise<SearchResult> {
+    // Build dynamic query with specified fields
+    const validFields = fields ?? ['id', 'name', 'overview'];
+    const fieldStrings = validFields.map((f) => `        ${f}`).join('\n');
+
+    const dynamicQuery = `
+      query SearchMovie($query: String!, $page: Int = 1) {
+        searchMovie(query: $query, page: $page) {
+          page
+          total_results
+          total_pages
+          results {
+${fieldStrings}
+          }
+        }
+      }
+    `;
+
+    const data = await this.request<{ searchMovie: SearchResult }>(dynamicQuery, {
+      query,
+      page,
+    });
     return data.searchMovie;
   }
 
@@ -465,6 +491,38 @@ export class TMDBGraphQLClient {
    */
   async searchTVShows(query: string, page: number = 1): Promise<SearchResult> {
     const data = await this.request<{ searchTV: SearchResult }>(SEARCH_TV_QUERY, { query, page });
+    return data.searchTV;
+  }
+
+  /**
+   * Search for TV shows with custom fields
+   */
+  async searchTVShowsWithFields(
+    query: string,
+    page: number = 1,
+    fields?: string[]
+  ): Promise<SearchResult> {
+    // Build dynamic query with specified fields
+    const validFields = fields ?? ['id', 'name', 'overview'];
+    const fieldStrings = validFields.map((f) => `        ${f}`).join('\n');
+
+    const dynamicQuery = `
+      query SearchTV($query: String!, $page: Int = 1) {
+        searchTV(query: $query, page: $page) {
+          page
+          total_results
+          total_pages
+          results {
+${fieldStrings}
+          }
+        }
+      }
+    `;
+
+    const data = await this.request<{ searchTV: SearchResult }>(dynamicQuery, {
+      query,
+      page,
+    });
     return data.searchTV;
   }
 
@@ -568,6 +626,34 @@ async function main() {
     const tvResults = await client.searchTVShows('Breaking Bad', 1);
     console.log(`Found ${tvResults.total_results} results:`);
     tvResults.results.slice(0, 3).forEach((result, index) => {
+      console.log(`  ${index + 1}. ${result.name} (${result.first_air_date?.split('-')[0] || 'N/A'}) - Rating: ${result.vote_average}`);
+    });
+    console.log('');
+
+    // Test 3b: Search for movies with custom fields
+    console.log('Test 3b: Searching for "Batman" with custom fields (id, title, release_date, vote_average)...');
+    const batmanResults = await client.searchMovies('Batman', 1, [
+      'id',
+      'title',
+      'release_date',
+      'vote_average',
+    ]);
+    console.log(`Found ${batmanResults.total_results} results (showing first 5):`);
+    batmanResults.results.slice(0, 5).forEach((result, index) => {
+      console.log(`  ${index + 1}. ${result.title} (${result.release_date?.split('-')[0] || 'N/A'}) - Rating: ${result.vote_average}`);
+    });
+    console.log('');
+
+    // Test 3c: Search for TV shows with custom fields
+    console.log('Test 3c: Searching for "Game of Thrones" with custom fields (id, name, first_air_date)...');
+    const gotResults = await client.searchTVShowsWithFields('Game of Thrones', 1, [
+      'id',
+      'name',
+      'first_air_date',
+      'vote_average',
+    ]);
+    console.log(`Found ${gotResults.total_results} results:`);
+    gotResults.results.slice(0, 3).forEach((result, index) => {
       console.log(`  ${index + 1}. ${result.name} (${result.first_air_date?.split('-')[0] || 'N/A'}) - Rating: ${result.vote_average}`);
     });
     console.log('');

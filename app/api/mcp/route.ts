@@ -36,53 +36,81 @@ function getGraphQLClient(): GraphQLClient {
   return graphqlClient;
 }
 
-// GraphQL Queries
-const SEARCH_MOVIE_QUERY = `
+// Valid fields for movie search results
+const MOVIE_VALID_FIELDS = [
+  'id',
+  'title',
+  'original_title',
+  'overview',
+  'poster_path',
+  'backdrop_path',
+  'release_date',
+  'vote_average',
+  'vote_count',
+  'popularity',
+  'adult',
+  'genre_ids',
+] as const;
+
+// Valid fields for TV search results
+const TV_VALID_FIELDS = [
+  'id',
+  'name',
+  'original_name',
+  'overview',
+  'poster_path',
+  'backdrop_path',
+  'first_air_date',
+  'vote_average',
+  'vote_count',
+  'popularity',
+  'genre_ids',
+] as const;
+
+// Default fields returned when none specified
+const DEFAULT_FIELDS: string[] = ['id', 'name', 'overview'];
+
+// Build a dynamic GraphQL query for movie search with specified fields
+function buildMovieSearchQuery(fields: string[]): string {
+  const validFields = fields.filter((f) =>
+    MOVIE_VALID_FIELDS.includes(f as (typeof MOVIE_VALID_FIELDS)[number])
+  );
+  const fieldStrings = validFields.map((f) => `        ${f}`).join('\n');
+
+  return `
   query SearchMovie($query: String!, $page: Int) {
     searchMovie(query: $query, page: $page) {
       page
       total_pages
       total_results
       results {
-        id
-        title
-        original_title
-        overview
-        poster_path
-        backdrop_path
-        release_date
-        vote_average
-        vote_count
-        popularity
-        adult
-        genre_ids
+${fieldStrings}
       }
     }
   }
 ` as const;
+}
 
-const SEARCH_TV_QUERY = `
+// Build a dynamic GraphQL query for TV search with specified fields
+function buildTVSearchQuery(fields: string[]): string {
+  const validFields = fields.filter((f) =>
+    TV_VALID_FIELDS.includes(f as (typeof TV_VALID_FIELDS)[number])
+  );
+  const fieldStrings = validFields.map((f) => `        ${f}`).join('\n');
+
+  return `
   query SearchTV($query: String!, $page: Int) {
     searchTV(query: $query, page: $page) {
       page
       total_pages
       total_results
       results {
-        id
-        name
-        original_name
-        overview
-        poster_path
-        backdrop_path
-        first_air_date
-        vote_average
-        vote_count
-        popularity
-        genre_ids
+${fieldStrings}
       }
     }
   }
 ` as const;
+}
 
 function createMcpServer(): McpServer {
   const server = new McpServer(
@@ -106,12 +134,15 @@ function createMcpServer(): McpServer {
       inputSchema: {
         query: z.string(),
         page: z.number().optional(),
+        fields: z.array(z.string()).optional(),
       },
     },
-    async ({ query, page }) => {
+    async ({ query, page, fields }) => {
       try {
-        logger.info({ query, page }, 'Searching movies');
-        const data = await getGraphQLClient().request(SEARCH_MOVIE_QUERY, {
+        const selectedFields = fields ?? DEFAULT_FIELDS;
+        logger.info({ query, page, fields: selectedFields }, 'Searching movies');
+        const queryString = buildMovieSearchQuery(selectedFields);
+        const data = await getGraphQLClient().request(queryString, {
           query,
           page: page ?? 1,
         });
@@ -156,12 +187,15 @@ function createMcpServer(): McpServer {
       inputSchema: {
         query: z.string(),
         page: z.number().optional(),
+        fields: z.array(z.string()).optional(),
       },
     },
-    async ({ query, page }) => {
+    async ({ query, page, fields }) => {
       try {
-        logger.info({ query, page }, 'Searching TV shows');
-        const data = await getGraphQLClient().request(SEARCH_TV_QUERY, {
+        const selectedFields = fields ?? DEFAULT_FIELDS;
+        logger.info({ query, page, fields: selectedFields }, 'Searching TV shows');
+        const queryString = buildTVSearchQuery(selectedFields);
+        const data = await getGraphQLClient().request(queryString, {
           query,
           page: page ?? 1,
         });
