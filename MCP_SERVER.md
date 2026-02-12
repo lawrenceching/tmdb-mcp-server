@@ -365,6 +365,10 @@ Common error codes:
 - `-32603`: Internal error
 - `-32000`: Method not allowed (for GET/DELETE in stateless mode)
 
+## Related Documentation
+
+- [Troubleshooting Guide](../docs/issue_graphql_error_in_prd.md) - Known issues and solutions
+
 ## Next Steps
 
 To complete the implementation:
@@ -373,3 +377,100 @@ To complete the implementation:
 2. **Add error handling**: Add proper error handling for TMDB API failures
 3. **Add caching**: Consider adding response caching for better performance
 4. **Add rate limiting**: Implement rate limiting to respect TMDB API limits
+
+---
+
+## Troubleshooting
+
+### Issue: GraphQL API Returns 500 Error in Production (Vercel)
+
+**Date**: 2026-02-12
+**Status**: Resolved
+
+#### Symptom
+
+The GraphQL API endpoint (`/api/graphql`) was returning HTTP 500 errors in Vercel production environment:
+
+```
+GraphQL Error (Code: 405): {"response":{"status":405,"headers":{...},"body":""},...}
+```
+
+The actual error was HTTP 500 (Internal Server Error), but graphql-request interpreted it as 405 due to Vercel's error page response.
+
+#### Root Cause
+
+The GraphQL schema was loaded dynamically using `@graphql-tools/load` with `loadSchemaSync`:
+
+```typescript
+// lib/graphql/schema/index.ts (before fix)
+const typeDefs = loadSchemaSync('./lib/graphql/schema/schema.graphql', {
+  loaders: [new GraphQLFileLoader()],
+});
+```
+
+Vercel's serverless/Lambda environment has filesystem limitations that prevent dynamic file loading at runtime. The `loadSchemaSync` function failed silently during server initialization, causing all GraphQL requests to fail with 500 errors.
+
+#### Verification Steps
+
+1. **Local development worked correctly**:
+   ```bash
+   bun run dev
+   bun test/graphql-client.ts --host http://localhost:3000/api/graphql
+   ```
+
+2. **TMDB API was accessible**:
+   - Verified `TMDB_ACCESS_TOKEN` was properly configured in Vercel environment
+   - Debug page confirmed TMDB API connectivity
+
+3. **Vercel function logs showed**:
+   - Schema loading failures (in runtime initialization)
+   - Silent errors that weren't properly propagated
+
+#### Solution
+
+Inline the GraphQL schema definition directly in the code instead of loading from external file:
+
+```typescript
+// lib/graphql/schema/index.ts (after fix)
+const typeDefs = `
+  # Movie queries
+  type Query {
+    movie(id: ID!): Movie
+    # ... complete schema definition
+  }
+  # ... all types
+`;
+
+export const schema = createSchema({
+  typeDefs,
+  resolvers: [...],
+});
+```
+
+#### Changes Made
+
+1. **Modified**: `lib/graphql/schema/index.ts`
+   - Removed `@graphql-tools/load` and `@graphql-tools/graphql-file-loader` imports
+   - Replaced `loadSchemaSync()` with inline string literal
+   - Deleted external `schema.graphql` file reference
+
+2. **Optional Cleanup** (not yet performed):
+   ```bash
+   bun remove @graphql-tools/load @graphql-tools/graphql-file-loader
+   ```
+
+#### Lessons Learned
+
+1. **Vercel Serverless Limitations**: Dynamic file loading at runtime is unreliable in serverless environments
+2. **Inline Definitions**: For serverless deployments, prefer inline definitions over file-based configurations
+3. **Error Propagation**: Ensure errors during server initialization are properly logged and surfaced
+4. **Testing Strategy**: Test in production-like environment to catch serverless-specific issues early
+
+#### Prevention
+
+When deploying GraphQL services to Vercel or other serverless platforms:
+
+- Use inline type definitions instead of loading from `.graphql` files
+- If external schema files are required, bundle them at build time using webpack/rollup plugins
+- Consider using code-generation tools that output TypeScript definitions
+- Test serverless function cold starts to ensure initialization succeeds
