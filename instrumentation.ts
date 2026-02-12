@@ -21,5 +21,7 @@ export async function register() {
         NEXT_RUNTIME: process.env.NEXT_RUNTIME,
       },
     }, 'Application starting up - Environment variables loaded');
+
+    logger.info(`GraphQL API URL: ${process.env.NEXT_PUBLIC_GRAPHQL_URL}`);
   }
 }
