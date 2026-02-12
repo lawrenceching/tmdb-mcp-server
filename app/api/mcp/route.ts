@@ -78,8 +78,8 @@ function buildMovieSearchQuery(fields: string[]): string {
   const fieldStrings = validFields.map((f) => `        ${f}`).join('\n');
 
   return `
-  query SearchMovie($query: String!, $page: Int) {
-    searchMovie(query: $query, page: $page) {
+  query SearchMovie($query: String!, $page: Int, $language: String) {
+    searchMovie(query: $query, page: $page, language: $language) {
       page
       total_pages
       total_results
@@ -99,8 +99,8 @@ function buildTVSearchQuery(fields: string[]): string {
   const fieldStrings = validFields.map((f) => `        ${f}`).join('\n');
 
   return `
-  query SearchTV($query: String!, $page: Int) {
-    searchTV(query: $query, page: $page) {
+  query SearchTV($query: String!, $page: Int, $language: String) {
+    searchTV(query: $query, page: $page, language: $language) {
       page
       total_pages
       total_results
@@ -130,21 +130,26 @@ function createMcpServer(): McpServer {
   server.registerTool(
     'searchMovies',
     {
-      description: 'Search for movies by title using GraphQL',
+      description: 'Search movices in TMDB',
       inputSchema: {
-        query: z.string(),
-        page: z.number().optional(),
-        fields: z.array(z.string()).optional(),
+        query: z.string().max(50, 'Query must be 50 characters or less'),
+        page: z.number().min(1).max(10).optional(),
+        language: z.string().optional().describe('Language code for TMDB query (e.g., en-US, zh-CN, ja-JP)'),
+        fields: z
+          .array(z.string())
+          .optional()
+          .describe('List of fields to return in results. Valid fields: id, title, original_title, overview, poster_path, backdrop_path, release_date, vote_average, vote_count, popularity, adult, genre_ids'),
       },
     },
-    async ({ query, page, fields }) => {
+    async ({ query, page, language, fields }) => {
       try {
         const selectedFields = fields ?? DEFAULT_FIELDS;
-        logger.info({ query, page, fields: selectedFields }, 'Searching movies');
+        logger.info({ query, page, language, fields: selectedFields }, 'Searching movies');
         const queryString = buildMovieSearchQuery(selectedFields);
         const data = await getGraphQLClient().request(queryString, {
           query,
           page: page ?? 1,
+          language: language ?? null,
         });
 
         return {
@@ -158,13 +163,13 @@ function createMcpServer(): McpServer {
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         const errorStack = error instanceof Error ? error.stack : undefined;
-        logger.error({ 
-          error: { 
-            message: errorMessage, 
+        logger.error({
+          error: {
+            message: errorMessage,
             stack: errorStack,
             name: error instanceof Error ? error.name : 'Unknown'
-          }, 
-          query 
+          },
+          query
         }, 'Error searching movies');
         return {
           content: [
@@ -183,21 +188,26 @@ function createMcpServer(): McpServer {
   server.registerTool(
     'searchTV',
     {
-      description: 'Search for TV shows by title using GraphQL',
+      description: 'Search TV shows or Anime in TMDB',
       inputSchema: {
-        query: z.string(),
-        page: z.number().optional(),
-        fields: z.array(z.string()).optional(),
+        query: z.string().max(50, 'Query must be 50 characters or less'),
+        page: z.number().min(1).max(10).optional(),
+        language: z.string().optional().describe('Language code for TMDB query (e.g., en-US, zh-CN, ja-JP)'),
+        fields: z
+          .array(z.string())
+          .optional()
+          .describe('List of fields to return in results. Valid fields: id, name, original_name, overview, poster_path, backdrop_path, first_air_date, vote_average, vote_count, popularity, genre_ids'),
       },
     },
-    async ({ query, page, fields }) => {
+    async ({ query, page, language, fields }) => {
       try {
         const selectedFields = fields ?? DEFAULT_FIELDS;
-        logger.info({ query, page, fields: selectedFields }, 'Searching TV shows');
+        logger.info({ query, page, language, fields: selectedFields }, 'Searching TV shows');
         const queryString = buildTVSearchQuery(selectedFields);
         const data = await getGraphQLClient().request(queryString, {
           query,
           page: page ?? 1,
+          language: language ?? null,
         });
 
         return {
@@ -211,13 +221,13 @@ function createMcpServer(): McpServer {
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         const errorStack = error instanceof Error ? error.stack : undefined;
-        logger.error({ 
-          error: { 
-            message: errorMessage, 
+        logger.error({
+          error: {
+            message: errorMessage,
             stack: errorStack,
             name: error instanceof Error ? error.name : 'Unknown'
-          }, 
-          query 
+          },
+          query
         }, 'Error searching TV shows');
         return {
           content: [
