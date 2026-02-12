@@ -2,6 +2,7 @@ import { createSchema } from 'graphql-yoga';
 import { movieResolvers } from '../resolvers/movie';
 import { tvResolvers } from '../resolvers/tv';
 import { searchResolvers } from '../resolvers/search';
+import { trendingResolvers } from '../resolvers/trending';
 
 // Inline GraphQL schema definition to avoid Vercel filesystem issues
 const typeDefs = `
@@ -19,6 +20,9 @@ const typeDefs = `
     searchMovie(query: String!, page: Int = 1, language: String): SearchResult!
     searchTV(query: String!, page: Int = 1, language: String): SearchResult!
     searchMulti(query: String!, page: Int = 1): [MediaResult!]!
+
+    # Trending queries
+    trending(mediaType: String = "all", timeWindow: String = "day"): TrendingResult!
   }
 
   # Movie types
@@ -252,14 +256,42 @@ const typeDefs = `
   }
 
   union MediaResult = Movie | TVShow
+
+  # Trending types
+  type TrendingResult {
+    page: Int!
+    total_results: Int!
+    total_pages: Int!
+    results: [TrendingItem!]!
+  }
+
+  type TrendingItem {
+    id: ID!
+    media_type: String
+    title: String
+    name: String
+    original_title: String
+    original_name: String
+    overview: String
+    poster_path: String
+    backdrop_path: String
+    release_date: String
+    first_air_date: String
+    vote_average: Float
+    vote_count: Int
+    popularity: Float
+    adult: Boolean
+    genre_ids: [Int!]
+  }
 `;
 
 export const schema = createSchema({
   typeDefs,
   resolvers: [
-    movieResolvers, 
-    tvResolvers, 
+    movieResolvers,
+    tvResolvers,
     searchResolvers,
+    trendingResolvers,
     {
       // Union type resolver for MediaResult
       MediaResult: {

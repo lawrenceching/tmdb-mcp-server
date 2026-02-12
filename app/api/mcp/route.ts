@@ -244,6 +244,47 @@ function getTVNestedFields(field: string): string {
   }
 }
 
+// Valid fields for trending content
+const TRENDING_VALID_FIELDS = [
+  'id',
+  'media_type',
+  'title',
+  'name',
+  'original_title',
+  'original_name',
+  'overview',
+  'poster_path',
+  'backdrop_path',
+  'release_date',
+  'first_air_date',
+  'vote_average',
+  'vote_count',
+  'popularity',
+  'adult',
+  'genre_ids',
+] as const;
+
+// Build a dynamic GraphQL query for trending content with specified fields
+function buildTrendingQuery(fields: string[]): string {
+  const validFields = fields.filter((f) =>
+    TRENDING_VALID_FIELDS.includes(f as (typeof TRENDING_VALID_FIELDS)[number])
+  );
+  const fieldStrings = validFields.map((f) => `        ${f}`).join('\n');
+
+  return `
+  query GetTrending($mediaType: String, $timeWindow: String) {
+    trending(mediaType: $mediaType, timeWindow: $timeWindow) {
+      page
+      total_results
+      total_pages
+      results {
+${fieldStrings}
+      }
+    }
+  }
+` as const;
+}
+
 function createMcpServer(): McpServer {
   const server = new McpServer(
     {
@@ -478,6 +519,64 @@ function createMcpServer(): McpServer {
             {
               type: 'text',
               text: `Error getting TV show details: ${errorMessage}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  // Get Trending Tool
+  server.registerTool(
+    'getTrending',
+    {
+      description: 'Get trending movies, TV shows, or people from TMDB',
+      inputSchema: {
+        mediaType: z.string().optional().describe('Type of media to fetch: "all", "movie", "tv", or "person" (default: "all")'),
+        timeWindow: z.string().optional().describe('Time window: "day" or "week" (default: "day")'),
+        language: z.string().optional().describe('Language code for localized results (e.g., en-US, zh-CN, ja-JP)'),
+        fields: z
+          .array(z.string())
+          .optional()
+          .describe('List of fields to return. Valid fields: id, media_type, title, name, original_title, original_name, overview, poster_path, backdrop_path, release_date, first_air_date, vote_average, vote_count, popularity, adult, genre_ids'),
+      },
+    },
+    async ({ mediaType, timeWindow, language, fields }) => {
+      try {
+        const selectedFields = fields ?? DEFAULT_FIELDS;
+        logger.info({ mediaType, timeWindow, language, fields: selectedFields }, 'Getting trending content');
+        const queryString = buildTrendingQuery(selectedFields);
+        const data = await getGraphQLClient().request(queryString, {
+          mediaType: mediaType ?? 'all',
+          timeWindow: timeWindow ?? 'day',
+        });
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(data.trending, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorStack = error instanceof Error ? error.stack : undefined;
+        logger.error({
+          error: {
+            message: errorMessage,
+            stack: errorStack,
+            name: error instanceof Error ? error.name : 'Unknown'
+          },
+          mediaType,
+          timeWindow
+        }, 'Error getting trending content');
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Error getting trending content: ${errorMessage}`,
             },
           ],
           isError: true,
