@@ -28,6 +28,7 @@
     popularity: Float
     adult: Boolean
     genre_ids: [Int!]
+    media_type: String
     runtime: Int
     status: String
     tagline: String
@@ -83,6 +84,7 @@
     vote_count: Int
     popularity: Float
     genre_ids: [Int!]
+    media_type: String
     genres: [Genre!]
     seasons: [Season!]
     credits: Credits
@@ -225,7 +227,7 @@
 
   type MovieResult {
     id: ID!
-    media_type: String!
+    media_type: String
     title: String
     name: String
     original_title: String

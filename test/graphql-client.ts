@@ -354,7 +354,7 @@ const SEARCH_MULTI_QUERY = gql`
         vote_average
         media_type
       }
-      ... on TvShow {
+      ... on TVShow {
         id
         name
         overview
@@ -491,7 +491,13 @@ async function main() {
       case '--host':
       case '-h':
         if (i + 1 < args.length) {
-          endpoint = args[i + 1];
+          let host = args[i + 1];
+          // Ensure the endpoint includes /api/graphql path
+          if (!host.endsWith('/api/graphql')) {
+            // Remove trailing slash if present, then append /api/graphql
+            host = host.replace(/\/$/, '') + '/api/graphql';
+          }
+          endpoint = host;
           i++;
         }
         break;
