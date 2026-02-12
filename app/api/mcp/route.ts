@@ -112,6 +112,72 @@ ${fieldStrings}
 ` as const;
 }
 
+// Valid fields for single movie retrieval
+const MOVIE_DETAIL_VALID_FIELDS = [
+  'id',
+  'title',
+  'original_title',
+  'overview',
+  'poster_path',
+  'backdrop_path',
+  'release_date',
+  'vote_average',
+  'vote_count',
+  'popularity',
+  'adult',
+  'genre_ids',
+  'runtime',
+  'status',
+  'tagline',
+  'genres',
+  'credits',
+  'videos',
+  'images',
+  'release_dates',
+  'recommendations',
+  'similar',
+] as const;
+
+// Build a dynamic GraphQL query for single movie retrieval with specified fields
+function buildMovieQuery(fields: string[]): string {
+  const validFields = fields.filter((f) =>
+    MOVIE_DETAIL_VALID_FIELDS.includes(f as (typeof MOVIE_DETAIL_VALID_FIELDS)[number])
+  );
+  const fieldStrings = validFields.map((f) => {
+    // Handle nested object fields differently
+    if (['genres', 'credits', 'videos', 'images', 'release_dates', 'recommendations', 'similar'].includes(f)) {
+      return `        ${f} { ${getNestedFields(f)} }`;
+    }
+    return `        ${f}`;
+  }).join('\n');
+
+  return `
+  query GetMovie($id: ID!, $language: String) {
+    movie(id: $id, language: $language) {
+${fieldStrings}
+    }
+  }
+` as const;
+}
+
+// Get nested fields for complex movie fields
+function getNestedFields(field: string): string {
+  switch (field) {
+    case 'genres':
+      return 'id\n        name';
+    case 'credits':
+      return 'cast {\n          id\n          name\n          character\n        }\n        crew {\n          id\n          name\n          job\n        }';
+    case 'videos':
+    case 'images':
+    case 'release_dates':
+    case 'recommendations':
+    case 'similar':
+      return ''; // Return empty for now, these will use default fields from resolver
+    default:
+      return '';
+  }
+}
+
 function createMcpServer(): McpServer {
   const server = new McpServer(
     {
@@ -234,6 +300,62 @@ function createMcpServer(): McpServer {
             {
               type: 'text',
               text: `Error searching TV shows: ${errorMessage}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  // Get Movie Tool
+  server.registerTool(
+    'getMovie',
+    {
+      description: 'Get movie details from TMDB by movie ID',
+      inputSchema: {
+        id: z.string().describe('The TMDB movie ID'),
+        language: z.string().optional().describe('Language code for TMDB query (e.g., en-US, zh-CN, ja-JP)'),
+        fields: z
+          .array(z.string())
+          .optional()
+          .describe('List of fields to return. Valid fields: id, title, original_title, overview, poster_path, backdrop_path, release_date, vote_average, vote_count, popularity, adult, genre_ids, runtime, status, tagline, genres, credits, videos, images, release_dates, recommendations, similar'),
+      },
+    },
+    async ({ id, language, fields }) => {
+      try {
+        const selectedFields = fields ?? ['id', 'title', 'overview', 'poster_path', 'backdrop_path', 'release_date', 'vote_average', 'runtime', 'genres'];
+        logger.info({ id, language, fields: selectedFields }, 'Getting movie details');
+        const queryString = buildMovieQuery(selectedFields);
+        const data = await getGraphQLClient().request(queryString, {
+          id,
+          language: language ?? null,
+        });
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(data.movie, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorStack = error instanceof Error ? error.stack : undefined;
+        logger.error({
+          error: {
+            message: errorMessage,
+            stack: errorStack,
+            name: error instanceof Error ? error.name : 'Unknown'
+          },
+          id
+        }, 'Error getting movie details');
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Error getting movie details: ${errorMessage}`,
             },
           ],
           isError: true,

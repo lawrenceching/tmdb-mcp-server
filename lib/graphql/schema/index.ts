@@ -8,7 +8,7 @@ const typeDefs = `
   # Movie queries
   type Query {
     # Movie queries
-    movie(id: ID!): Movie
+    movie(id: ID!, language: String): Movie
     movieBasic(id: ID!): MovieBasic
     
     # TV queries
