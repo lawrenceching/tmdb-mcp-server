@@ -81,43 +81,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Claude Desktop */}
-          <div id="claude-desktop" className="mb-10 scroll-mt-8 rounded-xl border border-border bg-card p-6 shadow-sm">
-            <div className="mb-4 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 text-white font-bold">
-                C
-              </div>
-              <div>
-                <h4 className="text-lg font-semibold">Claude Desktop</h4>
-                <p className="text-sm text-muted-foreground">Official Claude desktop app</p>
-              </div>
-            </div>
-            <div className="space-y-4">
-              <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-                <li>Open Claude Desktop settings</li>
-                <li>Navigate to <span className="font-mono rounded bg-muted px-1.5 py-0.5">Developer → MCP Servers</span></li>
-                <li>Add a new server configuration:</li>
-              </ol>
-              <div className="mt-4 rounded-lg bg-muted p-4">
-                <pre className="overflow-x-auto text-xs">
-                  <code>{`{
-  "mcpServers": {
-    "tmdb": {
-      "transport": {
-        "type": "http",
-        "url": "https://tmdb-mcp-server.imlc.me/api/mcp"
-      }
-    }
-  }
-}`}</code>
-                </pre>
-              </div>
-              <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground" start={4}>
-                <li>Restart Claude Desktop to apply changes</li>
-              </ol>
-            </div>
-          </div>
-
           {/* Cursor */}
           <div id="cursor" className="mb-10 scroll-mt-8 rounded-xl border border-border bg-card p-6 shadow-sm">
             <div className="mb-4 flex items-center gap-3">
