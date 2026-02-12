@@ -479,11 +479,60 @@ export class TMDBGraphQLClient {
 
 // CLI Execution
 async function main() {
-  const endpoint = process.argv[2] === '--host' ? process.argv[3] : 'https://tmdb-mcp-server.imlc.me/api/graphql';
-  
+  // Parse command line arguments
+  const args = process.argv.slice(2);
+  let endpoint = 'https://tmdb-mcp-server.imlc.me/api/graphql';
+  let customQuery: string | null = null;
+  let customVariables: string | null = null;
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    switch (arg) {
+      case '--host':
+      case '-h':
+        if (i + 1 < args.length) {
+          endpoint = args[i + 1];
+          i++;
+        }
+        break;
+      case '--data':
+      case '-d':
+        if (i + 1 < args.length) {
+          customQuery = args[i + 1];
+          i++;
+        }
+        break;
+      case '--variables':
+      case '-v':
+        if (i + 1 < args.length) {
+          customVariables = args[i + 1];
+          i++;
+        }
+        break;
+      case '--help':
+      case '-?':
+        printHelp();
+        process.exit(0);
+        break;
+    }
+  }
+
+  // If custom query provided, execute it and exit
+  if (customQuery) {
+    await executeCustomQuery(endpoint, customQuery, customVariables);
+    return;
+  }
+
+  // Default test mode
   console.log('TMDB GraphQL API Test Client');
   console.log('============================');
   console.log(`Endpoint: ${endpoint}`);
+  console.log('');
+  console.log('Usage:');
+  console.log('  bun test/graphql-client.ts                    # Run default tests');
+  console.log('  bun test/graphql-client.ts --host <url>       # Specify custom endpoint');
+  console.log('  bun test/graphql-client.ts -d "<query>"       # Execute custom query');
+  console.log('  bun test/graphql-client.ts -d "<query>" -v \'{"id":"123"}\'  # With variables');
   console.log('');
 
   const client = new TMDBGraphQLClient(endpoint);
@@ -541,6 +590,68 @@ async function main() {
     console.log('All tests completed successfully!');
   } catch (error) {
     console.error('Test failed:', error);
+    process.exit(1);
+  }
+}
+
+function printHelp() {
+  console.log(`
+TMDB GraphQL API Test Client
+============================
+
+Usage:
+  bun test/graphql-client.ts [options] [-d "<query>"]
+
+Options:
+  --host, -h <url>    GraphQL endpoint URL (default: https://tmdb-mcp-server.imlc.me/api/graphql)
+  --data, -d <query>  Execute a custom GraphQL query
+  --variables, -v <json>  Variables as JSON string (used with -d)
+  --help, -?          Show this help message
+
+Examples:
+  # Run default test suite
+  bun test/graphql-client.ts
+
+  # Custom endpoint
+  bun test/graphql-client.ts --host http://localhost:3000/api/graphql
+
+  # Execute custom query
+  bun test/graphql-client.ts -d 'query { movie(id: "27205") { title release_date } }'
+
+  # Execute query with variables
+  bun test/graphql-client.ts -d 'query($id: ID!) { movie(id: $id) { title } }' -v '{"id":"27205"}'
+`);
+}
+
+async function executeCustomQuery(endpoint: string, query: string, variablesJson: string | null) {
+  const client = new TMDBGraphQLClient(endpoint);
+
+  try {
+    let variables: Record<string, unknown> | undefined;
+
+    if (variablesJson) {
+      try {
+        variables = JSON.parse(variablesJson);
+      } catch (e) {
+        console.error('Error parsing variables JSON:', e);
+        process.exit(1);
+      }
+    }
+
+    console.log('Executing custom GraphQL query...');
+    console.log(`Endpoint: ${endpoint}`);
+    console.log('');
+
+    if (variables) {
+      console.log('Variables:', JSON.stringify(variables, null, 2));
+      console.log('');
+    }
+
+    const result = await client.request(query, variables);
+    console.log('Result:');
+    console.log(JSON.stringify(result, null, 2));
+  } catch (error) {
+    console.error('Query execution failed:', error);
     process.exit(1);
   }
 }
