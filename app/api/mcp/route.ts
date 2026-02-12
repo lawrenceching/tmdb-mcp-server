@@ -178,6 +178,72 @@ function getNestedFields(field: string): string {
   }
 }
 
+// Valid fields for single TV show retrieval
+const TV_DETAIL_VALID_FIELDS = [
+  'id',
+  'name',
+  'original_name',
+  'overview',
+  'poster_path',
+  'backdrop_path',
+  'first_air_date',
+  'last_air_date',
+  'vote_average',
+  'vote_count',
+  'popularity',
+  'genre_ids',
+  'seasons',
+  'genres',
+  'credits',
+  'videos',
+  'images',
+  'recommendations',
+  'similar',
+  'content_ratings',
+] as const;
+
+// Build a dynamic GraphQL query for single TV show retrieval with specified fields
+function buildTVQuery(fields: string[]): string {
+  const validFields = fields.filter((f) =>
+    TV_DETAIL_VALID_FIELDS.includes(f as (typeof TV_DETAIL_VALID_FIELDS)[number])
+  );
+  const fieldStrings = validFields.map((f) => {
+    // Handle nested object fields differently
+    if (['genres', 'credits', 'videos', 'images', 'recommendations', 'similar', 'content_ratings', 'seasons'].includes(f)) {
+      return `        ${f} { ${getTVNestedFields(f)} }`;
+    }
+    return `        ${f}`;
+  }).join('\n');
+
+  return `
+  query GetTV($id: ID!, $language: String) {
+    tv(id: $id, language: $language) {
+${fieldStrings}
+    }
+  }
+` as const;
+}
+
+// Get nested fields for complex TV show fields
+function getTVNestedFields(field: string): string {
+  switch (field) {
+    case 'genres':
+      return 'id\n        name';
+    case 'credits':
+      return 'cast {\n          id\n          name\n          character\n        }\n        crew {\n          id\n          name\n          job\n        }';
+    case 'seasons':
+      return 'id\n        name\n        overview\n        episode_count\n        poster_path\n        air_date\n        season_number';
+    case 'videos':
+    case 'images':
+    case 'recommendations':
+    case 'similar':
+    case 'content_ratings':
+      return ''; // Return empty for now, these will use default fields from resolver
+    default:
+      return '';
+  }
+}
+
 function createMcpServer(): McpServer {
   const server = new McpServer(
     {
@@ -356,6 +422,62 @@ function createMcpServer(): McpServer {
             {
               type: 'text',
               text: `Error getting movie details: ${errorMessage}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  // Get TV Show Tool
+  server.registerTool(
+    'getTV',
+    {
+      description: 'Get TV show details from TMDB by TV show ID',
+      inputSchema: {
+        id: z.string().describe('The TMDB TV show ID'),
+        language: z.string().optional().describe('Language code for TMDB query (e.g., en-US, zh-CN, ja-JP)'),
+        fields: z
+          .array(z.string())
+          .optional()
+          .describe('List of fields to return. Valid fields: id, name, original_name, overview, poster_path, backdrop_path, first_air_date, last_air_date, vote_average, vote_count, popularity, genre_ids, seasons, genres, credits, videos, images, recommendations, similar, content_ratings'),
+      },
+    },
+    async ({ id, language, fields }) => {
+      try {
+        const selectedFields = fields ?? ['id', 'name', 'overview', 'poster_path', 'backdrop_path', 'first_air_date', 'last_air_date', 'vote_average', 'genres', 'seasons'];
+        logger.info({ id, language, fields: selectedFields }, 'Getting TV show details');
+        const queryString = buildTVQuery(selectedFields);
+        const data = await getGraphQLClient().request(queryString, {
+          id,
+          language: language ?? null,
+        });
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(data.tv, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorStack = error instanceof Error ? error.stack : undefined;
+        logger.error({
+          error: {
+            message: errorMessage,
+            stack: errorStack,
+            name: error instanceof Error ? error.name : 'Unknown'
+          },
+          id
+        }, 'Error getting TV show details');
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Error getting TV show details: ${errorMessage}`,
             },
           ],
           isError: true,

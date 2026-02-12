@@ -2,8 +2,13 @@ import { fetchFromTMDB } from '@/lib/tmdb';
 
 export const tvResolvers = {
   Query: {
-    tv: async (_: unknown, { id }: { id: string }) => {
-      const response = await fetchFromTMDB(`/tv/${id}`);
+    tv: async (_: unknown, { id, language }: { id: string; language?: string }) => {
+      const params = new URLSearchParams({});
+      if (language) {
+        params.set('language', language);
+      }
+      const url = `/tv/${id}${params.toString() ? '?' + params.toString() : ''}`;
+      const response = await fetchFromTMDB(url);
       if (!response.ok) {
         throw new Error(`Failed to fetch TV show: ${response.status}`);
       }

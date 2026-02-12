@@ -12,7 +12,7 @@ const typeDefs = `
     movieBasic(id: ID!): MovieBasic
     
     # TV queries
-    tv(id: ID!): TVShow
+    tv(id: ID!, language: String): TVShow
     tvBasic(id: ID!): TVShowBasic
     
     # Search queries
