@@ -357,9 +357,9 @@ function createMcpServer(): McpServer {
     }
   );
 
-  // Search TV Shows Tool
+  // Search TV Shows Or Animes Tool
   server.registerTool(
-    'searchTV',
+    'searchTVShowsOrAnimes',
     {
       description: 'Search TV shows or Anime in TMDB',
       inputSchema: {
@@ -415,9 +415,9 @@ function createMcpServer(): McpServer {
     }
   );
 
-  // Get Movie Tool
+  // Get Movie Details Tool
   server.registerTool(
-    'getMovie',
+    'getMovieDetails',
     {
       description: 'Get movie details from TMDB by movie ID',
       inputSchema: {
@@ -471,9 +471,9 @@ function createMcpServer(): McpServer {
     }
   );
 
-  // Get TV Show Tool
+  // Get TV Show Details Tool
   server.registerTool(
-    'getTV',
+    'getTVShowDetails',
     {
       description: 'Get TV show details from TMDB by TV show ID',
       inputSchema: {
