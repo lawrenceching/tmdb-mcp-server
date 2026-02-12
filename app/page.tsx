@@ -19,10 +19,31 @@ export default function Home() {
       {/* Installation Instructions */}
       <section className="container mx-auto px-4 py-16">
         <div className="mx-auto max-w-4xl">
-          <h3 className="mb-12 text-center text-3xl font-bold">Installation Instructions</h3>
+          <h3 className="mb-6 text-center text-3xl font-bold">Installation Instructions</h3>
+
+          {/* Quick Nav Links */}
+          <nav className="mb-12 flex flex-wrap items-center justify-center gap-3">
+            {[
+              { id: "claude-desktop", label: "Claude Desktop", color: "from-orange-500 to-orange-600" },
+              { id: "cursor", label: "Cursor", color: "from-purple-500 to-purple-600" },
+              { id: "windsurf", label: "Windsurf", color: "from-cyan-500 to-cyan-600" },
+              { id: "cline", label: "Cline", color: "from-blue-500 to-blue-600" },
+              { id: "continue", label: "Continue.dev", color: "from-emerald-500 to-emerald-600" },
+              { id: "chatgpt", label: "ChatGPT", color: "from-green-500 to-green-600" },
+            ].map((item) => (
+              <a
+                key={item.id}
+                href={`#${item.id}`}
+                className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-muted"
+              >
+                <span className={`inline-block h-2.5 w-2.5 rounded-full bg-gradient-to-br ${item.color}`} />
+                {item.label}
+              </a>
+            ))}
+          </nav>
 
           {/* Claude Desktop */}
-          <div className="mb-10 rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div id="claude-desktop" className="mb-10 scroll-mt-8 rounded-xl border border-border bg-card p-6 shadow-sm">
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 text-white font-bold">
                 C
@@ -59,7 +80,7 @@ export default function Home() {
           </div>
 
           {/* Cursor */}
-          <div className="mb-10 rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div id="cursor" className="mb-10 scroll-mt-8 rounded-xl border border-border bg-card p-6 shadow-sm">
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 text-white font-bold">
                 Cu
@@ -94,7 +115,7 @@ export default function Home() {
           </div>
 
           {/* Windsurf */}
-          <div className="mb-10 rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div id="windsurf" className="mb-10 scroll-mt-8 rounded-xl border border-border bg-card p-6 shadow-sm">
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-cyan-500 to-cyan-600 text-white font-bold">
                 W
@@ -124,7 +145,7 @@ Endpoint URL: https://tmdb-mcp-server.imlc.me/api/mcp`}</code>
           </div>
 
           {/* Cline (VS Code) */}
-          <div className="mb-10 rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div id="cline" className="mb-10 scroll-mt-8 rounded-xl border border-border bg-card p-6 shadow-sm">
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white font-bold">
                 Cl
@@ -161,7 +182,7 @@ Endpoint URL: https://tmdb-mcp-server.imlc.me/api/mcp`}</code>
           </div>
 
           {/* Continue.dev */}
-          <div className="mb-10 rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div id="continue" className="mb-10 scroll-mt-8 rounded-xl border border-border bg-card p-6 shadow-sm">
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 text-white font-bold">
                 Co
@@ -199,7 +220,7 @@ Endpoint URL: https://tmdb-mcp-server.imlc.me/api/mcp`}</code>
           </div>
 
           {/* OpenAI ChatGPT */}
-          <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div id="chatgpt" className="scroll-mt-8 rounded-xl border border-border bg-card p-6 shadow-sm">
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-green-500 to-green-600 text-white font-bold">
                 GPT
