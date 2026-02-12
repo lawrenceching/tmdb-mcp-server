@@ -6,9 +6,35 @@ import { GraphQLClient } from 'graphql-request';
 import logger from '@/lib/logger';
 
 // GraphQL Client
-const graphqlClient = new GraphQLClient(
-  process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:3000/api/graphql'
-);
+// Note: NEXT_PUBLIC_GRAPHQL_URL must be configured in environment variables
+// Do NOT use localhost fallback as it will fail in production
+const graphqlClientUrl = process.env.NEXT_PUBLIC_GRAPHQL_URL;
+
+// Error code for missing GraphQL URL configuration
+const ERROR_CODE_MISSING_GRAPHQL_URL = 30001;
+const ERROR_MESSAGE_MISSING_GRAPHQL_URL = 'MCP Server 配置错误, 错误代码 30001, 请联系管理员';
+
+// Validate GraphQL URL is configured
+function validateGraphQLConfig(): void {
+  if (!graphqlClientUrl) {
+    logger.error({
+      errorCode: ERROR_CODE_MISSING_GRAPHQL_URL,
+      message: 'NEXT_PUBLIC_GRAPHQL_URL environment variable is not configured'
+    }, 'MCP Server Configuration Error');
+    throw new Error(ERROR_MESSAGE_MISSING_GRAPHQL_URL);
+  }
+}
+
+// GraphQL Client - only create if URL is validated
+let graphqlClient: GraphQLClient | null = null;
+
+function getGraphQLClient(): GraphQLClient {
+  validateGraphQLConfig();
+  if (!graphqlClient) {
+    graphqlClient = new GraphQLClient(graphqlClientUrl!);
+  }
+  return graphqlClient;
+}
 
 // GraphQL Queries
 const SEARCH_MOVIE_QUERY = `
@@ -85,7 +111,7 @@ function createMcpServer(): McpServer {
     async ({ query, page }) => {
       try {
         logger.info({ query, page }, 'Searching movies');
-        const data = await graphqlClient.request(SEARCH_MOVIE_QUERY, {
+        const data = await getGraphQLClient().request(SEARCH_MOVIE_QUERY, {
           query,
           page: page ?? 1,
         });
@@ -135,7 +161,7 @@ function createMcpServer(): McpServer {
     async ({ query, page }) => {
       try {
         logger.info({ query, page }, 'Searching TV shows');
-        const data = await graphqlClient.request(SEARCH_TV_QUERY, {
+        const data = await getGraphQLClient().request(SEARCH_TV_QUERY, {
           query,
           page: page ?? 1,
         });
