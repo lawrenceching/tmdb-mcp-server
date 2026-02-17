@@ -74,7 +74,8 @@ export default function Home() {
                 The Movie Database
               </a>
             </p>
-            <p>This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
+            <p className="mb-2">This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
+            <a href="/llms" className="text-primary hover:underline">AI Agent Documentation</a>
           </div>
         </div>
       </footer>
