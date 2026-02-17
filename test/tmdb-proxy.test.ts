@@ -3,7 +3,7 @@
  */
 import { describe, it, expect } from 'vitest';
 
-const BASE_URL = process.env.TEST_BASE_URL || 'http://localhost:3000';
+const BASE_URL = process.env.TEST_BASE_URL || 'https://tmdb-mcp-server.imlc.me';
 
 describe('TMDB Reverse Proxy - Search', () => {
   it('should search movies', async () => {
