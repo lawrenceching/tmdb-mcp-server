@@ -1,7 +1,15 @@
 const TMDB_API_BASE = 'https://api.themoviedb.org/3';
+const TMDB_ACCESS_TOKEN = process.env.TMDB_ACCESS_TOKEN;
 
 export function getTMDBApiUrl(path: string): string {
   return `${TMDB_API_BASE}${path}`;
+}
+
+export function getTMDBHeaders(): HeadersInit {
+  return {
+    'Authorization': `Bearer ${TMDB_ACCESS_TOKEN}`,
+    'Content-Type': 'application/json',
+  };
 }
 
 export function logHttpRequest(method: string, path: string, startTime: number, duration?: number): void {

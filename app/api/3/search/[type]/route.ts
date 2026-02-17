@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchFromTMDB } from '@/lib/tmdb';
+import { getTMDBApiUrl, getTMDBHeaders } from '@/lib/tmdb';
 
 export async function GET(
   request: NextRequest,
@@ -7,6 +7,7 @@ export async function GET(
 ) {
   const { type } = await params;
 
+  // Validate type - only allow movie and tv search
   if (type !== 'movie' && type !== 'tv') {
     return NextResponse.json(
       { error: 'Invalid type. Must be either "movie" or "tv"' },
@@ -14,34 +15,27 @@ export async function GET(
     );
   }
 
-  const searchParams = request.nextUrl.searchParams;
-  const query = searchParams.get('query');
+  // Build the target TMDB URL with all query parameters
+  const targetUrl = getTMDBApiUrl(`/search/${type}`);
+  const url = new URL(targetUrl);
 
-  if (!query) {
-    return NextResponse.json(
-      { error: 'Missing required parameter: query' },
-      { status: 400 }
-    );
-  }
+  // Forward all query parameters from the original request
+  const searchParams = request.nextUrl.searchParams;
+  searchParams.forEach((value, key) => {
+    url.searchParams.append(key, value);
+  });
 
   try {
-    const queryParams = new URLSearchParams();
-    queryParams.append('query', query);
-    
-    for (const [key, value] of searchParams.entries()) {
-      if (key !== 'query') {
-        queryParams.append(key, value);
-      }
-    }
-
-    const response = await fetchFromTMDB(
-      `/search/${type}?${queryParams.toString()}`
-    );
+    // Make the request to TMDB with the access token injected
+    const response = await fetch(url.toString(), {
+      method: 'GET',
+      headers: getTMDBHeaders(),
+    });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { error: errorData || 'TMDB API request failed' },
+        { error: errorData.status_message || 'TMDB API request failed' },
         { status: response.status }
       );
     }
@@ -49,7 +43,7 @@ export async function GET(
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Error in search endpoint:', error);
+    console.error('Error in search proxy:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
