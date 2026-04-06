@@ -185,6 +185,54 @@ async function handleRequest(request: NextRequest) {
     console.log(`TVDB API response status: ${response.status} ${response.statusText}`);
     console.log(`TVDB API response headers: ${JSON.stringify(Object.fromEntries(response.headers.entries()))}`);
 
+    // 检查 token 是否过期 (401 状态码)
+    if (response.status === 401) {
+      console.log("TVDB API returned 401, token expired");
+      // 删除 Redis 中的过期 token
+      const redis = await getRedisClient();
+      const tokenKey = "tvdb_token";
+      console.log("Deleting expired TVDB token from Redis");
+      await redis.del(tokenKey);
+      console.log("Expired TVDB token deleted from Redis");
+      
+      // 重新登录获取新 token
+      console.log("Re-login to TVDB API after token expiry");
+      const newToken = await getTvdbToken();
+      console.log("New TVDB token obtained after re-login");
+      
+      // 重新发送请求
+      console.log("Retrying request with new token");
+      const newHeaders = new Headers(request.headers);
+      newHeaders.set("Authorization", `Bearer ${newToken}`);
+      newHeaders.delete("host");
+      newHeaders.delete("connection");
+      
+      const newRequestOptions: RequestInit = {
+        method: request.method,
+        headers: newHeaders,
+      };
+      
+      if (request.method !== "GET" && request.method !== "HEAD") {
+        const body = await request.body;
+        if (body) {
+          newRequestOptions.body = body;
+        }
+      }
+      
+      const newResponse = await fetch(tvdbUrl, newRequestOptions);
+      console.log(`TVDB API retry response status: ${newResponse.status} ${newResponse.statusText}`);
+      
+      const newResponseHeaders = new Headers(newResponse.headers);
+      newResponseHeaders.delete("content-encoding");
+      newResponseHeaders.delete("content-length");
+      
+      return new NextResponse(newResponse.body, {
+        status: newResponse.status,
+        statusText: newResponse.statusText,
+        headers: newResponseHeaders,
+      });
+    }
+
     // 构建响应
     const responseHeaders = new Headers(response.headers);
     // 移除可能导致问题的头
