@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchFromTMDB } from '@/lib/tmdb';
+import { fetchFromTMDB, getTMDBApiUrl } from '@/lib/tmdb';
+
+const debug = true;
 
 /**
  * POST /api/debug/curl
@@ -7,12 +9,38 @@ import { fetchFromTMDB } from '@/lib/tmdb';
  */
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
+  const path = '/movie/popular?page=1';
+  const url = getTMDBApiUrl(path);
+  const token = process.env.TMDB_ACCESS_TOKEN;
+
+  const headers: HeadersInit = {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  };
+
+  if (debug) {
+    console.log("[TMDB Curl] Request:", {
+      method: 'GET',
+      url: url,
+      headers: Object.fromEntries(new Headers(headers).entries()),
+    });
+  }
 
   try {
     // Test the TMDB API by fetching popular movies (a lightweight endpoint)
     const response = await fetchFromTMDB('/movie/popular?page=1');
 
     const duration = Date.now() - startTime;
+
+    if (debug) {
+      console.log("[TMDB Curl] Response:", {
+        status: response.status,
+        statusText: response.statusText,
+        url: url,
+        responseTime: `${duration}ms`,
+        headers: Object.fromEntries(response.headers.entries()),
+      });
+    }
 
     if (!response.ok) {
       const errorText = await response.text();
