@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+const debug = true;
+
 const TMDB_ORIGIN = "https://api.themoviedb.org";
 const PROXY_VIA_PSEUDONYM = "tmdb-mcp-server";
 const SERVER_IDENT = "tmdb-mcp-server";
@@ -62,9 +64,27 @@ async function handleRequest(request: NextRequest) {
       }
     }
 
+    if (debug) {
+      console.log("[TMDB Proxy] Request:", {
+        method: request.method,
+        url: targetUrl,
+        headers: Object.fromEntries(headers.entries()),
+      });
+    }
+
     const upstreamStart = performance.now();
     const response = await fetch(targetUrl, requestOptions);
     const upstreamMs = performance.now() - upstreamStart;
+
+    if (debug) {
+      console.log("[TMDB Proxy] Response:", {
+        status: response.status,
+        statusText: response.statusText,
+        url: targetUrl,
+        responseTime: `${upstreamMs.toFixed(3)}ms`,
+        headers: Object.fromEntries(response.headers.entries()),
+      });
+    }
 
     const responseHeaders = new Headers(response.headers);
     responseHeaders.delete("content-encoding");
