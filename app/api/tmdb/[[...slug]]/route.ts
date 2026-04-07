@@ -29,6 +29,8 @@ export async function PATCH(request: NextRequest) {
 }
 
 async function handleRequest(request: NextRequest) {
+  const url = new URL(request.url);
+
   try {
     const token = process.env.TMDB_ACCESS_TOKEN;
     if (!token) {
@@ -38,7 +40,6 @@ async function handleRequest(request: NextRequest) {
       );
     }
 
-    const url = new URL(request.url);
     const pathname = url.pathname;
     const upstreamPath = pathname.replace(/^\/api\/tmdb/, "") || "/";
     const targetUrl = `${TMDB_ORIGIN}${upstreamPath}${url.search}`;
@@ -83,9 +84,29 @@ async function handleRequest(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error handling TMDB proxy request:", error);
-    return NextResponse.json(
-      { error: (error as Error).message },
-      { status: 500 }
-    );
+
+    const err = error as Error;
+    const cause = (err as NodeJS.ErrnoException)?.cause as Error | undefined;
+
+    // Build RFC 7807 Problem Details response
+    const problemDetails = {
+      type: "https://httpwg.org/http-spec/rfc7807.html",
+      title: "Upstream Connection Failed",
+      status: 502,
+      detail: cause?.message || err.message || "Unknown error",
+      instance: url.pathname,
+      upstream: {
+        host: TMDB_ORIGIN,
+        error: {
+          code: (err as NodeJS.ErrnoException)?.code || "UNKNOWN",
+          name: cause?.name || err.name,
+        },
+      },
+    };
+
+    return NextResponse.json(problemDetails, {
+      status: 502,
+      headers: { "Content-Type": "application/problem+json" },
+    });
   }
 }

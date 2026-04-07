@@ -1,3 +1,5 @@
+import { ConnectionStatus } from '@/components/connection-status'
+
 export default function Home() {
   return (
     <div className="min-h-screen bg-linear-to-b from-background to-muted/20">
@@ -74,7 +76,10 @@ export default function Home() {
 
           <div className="space-y-6">
             <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-              <h4 className="mb-3 text-lg font-semibold">TMDB</h4>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-lg font-semibold">TMDB</h4>
+                <ConnectionStatus checkUrl="/api/tmdb/3/configuration" />
+              </div>
               <p className="mb-4 text-sm text-muted-foreground">
                 Requests to <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">/api/tmdb/*</code> are forwarded to{" "}
                 <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">https://api.themoviedb.org/*</code>.
@@ -97,7 +102,10 @@ export default function Home() {
             </div>
 
             <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-              <h4 className="mb-3 text-lg font-semibold">TVDB</h4>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-lg font-semibold">TVDB</h4>
+                <ConnectionStatus checkUrl="/api/tvdb/v4" />
+              </div>
               <p className="mb-4 text-sm text-muted-foreground">
                 Requests to <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">/api/tvdb/*</code> are forwarded to{" "}
                 <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">https://api4.thetvdb.com/*</code>.

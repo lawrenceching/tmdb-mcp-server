@@ -144,9 +144,10 @@ export async function PATCH(request: NextRequest) {
 
 // 处理请求的核心函数
 async function handleRequest(request: NextRequest) {
+  const url = new URL(request.url);
+
   try {
     // 获取路径参数和查询参数
-    const url = new URL(request.url);
     const pathname = url.pathname;
     const searchParams = url.search;
     const tvdbPath = pathname.replace(/^\/api\/tvdb/, "") || "/";
@@ -246,9 +247,29 @@ async function handleRequest(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error handling TVDB request:", error);
-    return NextResponse.json(
-      { error: (error as Error).message },
-      { status: 500 }
-    );
+
+    const err = error as Error;
+    const cause = (err as NodeJS.ErrnoException)?.cause as Error | undefined;
+
+    // Build RFC 7807 Problem Details response
+    const problemDetails = {
+      type: "https://httpwg.org/http-spec/rfc7807.html",
+      title: "Upstream Connection Failed",
+      status: 502,
+      detail: cause?.message || err.message || "Unknown error",
+      instance: url.pathname,
+      upstream: {
+        host: TVDB_API_BASE_URL,
+        error: {
+          code: (err as NodeJS.ErrnoException)?.code || "UNKNOWN",
+          name: cause?.name || err.name,
+        },
+      },
+    };
+
+    return NextResponse.json(problemDetails, {
+      status: 502,
+      headers: { "Content-Type": "application/problem+json" },
+    });
   }
 }
