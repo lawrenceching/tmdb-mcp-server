@@ -46,10 +46,16 @@ async function handleRequest(request: NextRequest) {
     const upstreamPath = pathname.replace(/^\/api\/tmdb/, "") || "/";
     const targetUrl = `${TMDB_ORIGIN}${upstreamPath}${url.search}`;
 
-    const headers = new Headers(request.headers);
+    // Only send necessary headers - don't forward all incoming headers
+    // TMDB rejects requests with too many proxy/infrastructure headers
+    const headers = new Headers();
     headers.set("Authorization", `Bearer ${token}`);
-    headers.delete("host");
-    headers.delete("connection");
+    headers.set("Accept", "application/json");
+    // Forward content-type for requests with body
+    const contentType = request.headers.get("content-type");
+    if (contentType) {
+      headers.set("Content-Type", contentType);
+    }
 
     const requestOptions: RequestInit & { duplex?: "half" } = {
       method: request.method,
