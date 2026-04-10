@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 const debug = true;
 
-const TMDB_ORIGIN = "https://api.themoviedb.org";
+const TMDB_ORIGIN = "https://api.themoviedb.org/3";
 const PROXY_VIA_PSEUDONYM = "tmdb-mcp-server";
 const SERVER_IDENT = "tmdb-mcp-server";
 
