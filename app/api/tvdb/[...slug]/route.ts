@@ -26,7 +26,7 @@ async function getRedisClient() {
 }
 
 // TVDB API 基础 URL
-const TVDB_API_BASE_URL = "https://api4.thetvdb.com";
+const TVDB_API_BASE_URL = "https://api4.thetvdb.com/v4";
 
 // 登录到 TVDB API 获取 token
 async function loginToTvdb() {
