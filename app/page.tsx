@@ -104,7 +104,7 @@ export default function Home() {
             <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
               <div className="flex items-center justify-between mb-3">
                 <h4 className="text-lg font-semibold">TVDB</h4>
-                <ConnectionStatus checkUrl="/api/tvdb/v4" />
+                <ConnectionStatus checkUrl="/api/tvdb/series/421069" />
               </div>
               <p className="mb-4 text-sm text-muted-foreground">
                 Requests to <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">/api/tvdb/*</code> are forwarded to{" "}
@@ -116,7 +116,7 @@ export default function Home() {
                 <p className="mb-2 text-sm font-medium text-muted-foreground">Example</p>
                 <div className="rounded-lg bg-muted p-4">
                   <code className="text-sm font-mono break-all">
-                    GET /api/tvdb/series/3950 → https://api4.thetvdb.com/series/3950
+                    GET /api/tvdb/series/421069 → https://api4.thetvdb.com/series/421069
                   </code>
                 </div>
               </div>
