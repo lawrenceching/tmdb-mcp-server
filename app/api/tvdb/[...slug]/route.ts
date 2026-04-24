@@ -27,6 +27,8 @@ async function getRedisClient() {
 
 // TVDB API 基础 URL
 const TVDB_API_BASE_URL = "https://api4.thetvdb.com/v4";
+const SAFE_ERROR_DETAIL = "TVDB proxy request failed. See errorCode for details.";
+const TVDB_CONFIG_MISSING_ERROR_CODE = "TVDB_CONFIG_MISSING";
 
 // 登录到 TVDB API 获取 token
 async function loginToTvdb() {
@@ -250,13 +252,20 @@ async function handleRequest(request: NextRequest) {
 
     const err = error as Error;
     const cause = (err as NodeJS.ErrnoException)?.cause as Error | undefined;
+    const message = err.message || "";
+    const causeMessage = cause?.message || "";
+    const isTvdbApiKeyMissing =
+      message.includes("TVDB_API_KEY is not set") ||
+      causeMessage.includes("TVDB_API_KEY is not set");
 
     // Build RFC 7807 Problem Details response
-    const problemDetails = {
+    const problemDetails: Record<string, unknown> = {
       type: "https://httpwg.org/http-spec/rfc7807.html",
       title: "Upstream Connection Failed",
       status: 502,
-      detail: cause?.message || err.message || "Unknown error",
+      detail: isTvdbApiKeyMissing
+        ? SAFE_ERROR_DETAIL
+        : cause?.message || err.message || "Unknown error",
       instance: url.pathname,
       upstream: {
         host: TVDB_API_BASE_URL,
@@ -266,6 +275,9 @@ async function handleRequest(request: NextRequest) {
         },
       },
     };
+    if (isTvdbApiKeyMissing) {
+      problemDetails.errorCode = TVDB_CONFIG_MISSING_ERROR_CODE;
+    }
 
     return NextResponse.json(problemDetails, {
       status: 502,
